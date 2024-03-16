@@ -23,6 +23,7 @@ const goToPage = (page) => {
   if (["login", "register"].includes(page)) {
     displayNav("nav");
     clearInterval(intervalId);
+
     document.querySelector(".header-user-name").innerText = "";
   } else {
     displayNav("auth-nav");
