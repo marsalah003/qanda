@@ -42,19 +42,22 @@ const goToSubpage = (subpage) => {
     ({ email }) =>
       (document.querySelector(".header-user-name").innerText = email)
   );
-  displayThreads(page);
+  if (!document.querySelector(`#${subpage}-subpage`).style.display) {
+    displayThreads(page);
+  }
   clearInterval(intervalId);
   intervalId = setInterval(() => {
     displayThreads(page);
   }, 1000 * 30);
   goToPage("auth");
+
   document
     .querySelectorAll("#main-content > .subpage")
     .forEach((subpage) => (subpage.style.display = "none"));
 
   document.querySelector(`#${subpage}-subpage`).style.display = "flex";
 };
-const displayThreads = (start) => {
+const displayThreads = (start, threadsToInclude) => {
   document.querySelector("#thread-list").innerHTML = "";
 
   return new Promise((resolve) =>
@@ -62,13 +65,15 @@ const displayThreads = (start) => {
       if (data.length === 0) resolve("No threads left to display");
       const threadIdPromises = [];
       for (const threadId of data) {
+        if (threadsToInclude)
+          if (!threadsToInclude.includes(threadId)) continue;
         threadIdPromises.push(
           request(`thread?id=${threadId}`, "GET", "", token)
         );
       }
 
       Promise.all(threadIdPromises).then((data) =>
-        data.forEach(({ creatorId, title, createdAt, likes, id }) => {
+        data.forEach(({ creatorId, title, createdAt, likes, id, name }) => {
           request(`user?userId=${creatorId} `, "GET", "", token)
             .then(({ name }) => {
               const card = document
@@ -76,22 +81,25 @@ const displayThreads = (start) => {
                 .cloneNode(true);
               card.style.display = "block";
               card.querySelector(".card-header").innerText = title;
-              card.querySelector(".card-title").innerText = name;
               card.querySelector(".card-id").innerText = id;
               request(`user?userId=${creatorId}`, "GET", "", token).then(
                 ({ email }) =>
-                  (card.querySelector(".card-creator-name").innerText = email)
+                  (card.querySelector(".card-creator-name").innerText = name)
               );
 
               card.querySelector(".card-text").innerText = `${createdAt}| ${
                 likes.length
               } like${likes.length === 1 ? "" : "s"} `;
+              card.style.background = "grey";
               document.querySelector("#thread-list").appendChild(card);
-
               resolve("Success");
               card.addEventListener("click", (e) => {
                 request(`thread?id=${id}`, "GET", "", token).then(
                   ({ title, content, likes, id }) => {
+                    document
+                      .querySelectorAll(".thread-card")
+                      .forEach((e) => (e.style.background = "grey"));
+                    card.style.background = "yellow";
                     viewThread(id, getUserId());
                   }
                 );
@@ -111,165 +119,238 @@ const displayThreads = (start) => {
                   );
                   return date2.getTime() - date1.getTime();
                 })
-                .forEach((node) => list.appendChild(node));
+                .forEach((node) => {
+                  list.appendChild(node);
+                });
+            })
+            .then(() => {
+              document
+                .querySelectorAll(".card-creator-name")
+                .forEach((el) =>
+                  el.removeEventListener("click", handleUserNameClick)
+                );
+              document
+                .querySelectorAll(".card-creator-name")
+                .forEach((el) =>
+                  el.addEventListener("click", handleUserNameClick)
+                );
             });
         })
       );
     })
   );
 };
+const handleUserNameClick = (e) => {
+  e.stopPropagation();
 
+  request();
+  goToSubpage("user");
+};
+
+const createComment = ({
+  content,
+  creatorId,
+  id,
+  parentCommentId,
+  createdAt,
+  likes,
+  name,
+}) => {
+  const card = document
+    .querySelector(".comment-thread-container")
+    .cloneNode(true);
+
+  card.style.display = "block";
+
+  card.querySelector(".card-title").innerText = `replied to ${parentCommentId}`;
+
+  card.querySelector(".card-id").innerText = ` comment id: ${id}`;
+
+  card.querySelector(".card-likes").innerText = likes.length;
+
+  card.querySelector("#like-card").style.background = likes.includes(
+    getUserId()
+  )
+    ? "red"
+    : "white";
+
+  request(`user?userId=${creatorId}`, "GET", "", token).then(
+    ({ image, name }) => {
+      card.querySelector(".card-creator-name").innerText = name;
+      card.querySelector("#card-img").src = image;
+    }
+  );
+  const rtf = new Intl.RelativeTimeFormat("en", {
+    numeric: "auto",
+  });
+  const dateFromNow = getRelativeTimeString(new Date(createdAt));
+  card.querySelector(
+    ".card-text"
+  ).innerText = `content: ${content}, this comment was created: ${dateFromNow} `;
+
+  card.querySelector(".card-body").style.flexDirection = "column";
+  return card;
+};
+
+const handleViewCommentReplies = (comment, threadId) =>
+  comment.addEventListener("click", (e) => {
+    if (!Array.from(e.target.classList).includes("see-card-replies")) return;
+    const parentCommentContainer = e.target.closest(
+      ".comment-thread-container"
+    );
+    const commentReplyingTo = e.target.closest(".thread-card");
+    if (!commentReplyingTo) return;
+
+    const commentId = commentReplyingTo
+      .querySelector(".card-id")
+      .innerText.split(" ")[2];
+
+    if (parentCommentContainer.childElementCount > 1)
+      return parentCommentContainer
+        .querySelectorAll(".comment-thread-container")
+        .forEach((el) => {
+          parentCommentContainer.removeChild(el);
+        });
+
+    request(`comments?threadId=${threadId}`, "GET", "", token).then(
+      (comments) =>
+        comments
+          .filter((comment) => comment.parentCommentId == commentId)
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .forEach((comment) => {
+            const newComment = createComment(comment);
+
+            const commentReplyingTo = parseInt(
+              getComputedStyle(parentCommentContainer).marginLeft
+            );
+
+            newComment.style.marginLeft = commentReplyingTo + 30 + "px";
+            parentCommentContainer.appendChild(newComment);
+
+            handleCommentReply(newComment);
+            handleCommentEdit(newComment);
+            handleCommentLike(newComment);
+          })
+    );
+  });
+
+const handleCommentLike = (comment) => {
+  comment.querySelector("#like-card").addEventListener("click", (e) => {
+    const commentId = e.target
+      .closest(".thread-card")
+      .querySelector(".card-id")
+      .innerText.split(" ")[2];
+
+    const isLiked = !(e.target.style.background === "red");
+
+    request(
+      "comment/like",
+      "PUT",
+      { id: commentId, turnon: isLiked },
+      token
+    ).then(() => {
+      e.target.style.background = isLiked ? "red" : "white";
+      const likes = parseInt(
+        e.target.closest(".thread-card").querySelector(".card-likes").innerText
+      );
+
+      e.target.closest(".thread-card").querySelector(".card-likes").innerText =
+        likes + (isLiked ? 1 : -1);
+    });
+  });
+};
+const handleCommentEdit = (comment) => {
+  comment.querySelector("#edit-card").addEventListener("click", (e) => {
+    const commentId = e.target
+      .closest(".thread-card")
+      .querySelector(".card-id")
+      .innerText.split(" ")[2];
+    document.querySelector("#comment-model").style.display = "block";
+    document.querySelector(".comment-btn").addEventListener("click", (e) => {
+      const content = document.querySelector("#comment-text").value;
+      const threadId = document.querySelector(".view-thread-id").innerText;
+
+      request("comment", "PUT", { id: commentId, content }, token).then(() => {
+        comment.querySelector(".card-text").innerText = content;
+        const modal = document.querySelector("#comment-model");
+        modal.style.display = "none";
+        modal.parentNode.replaceChild(modal.cloneNode(true), modal);
+      });
+    });
+  });
+};
+const handleCommentReply = (comment) => {
+  comment.querySelector("#reply-to-card").addEventListener("click", (e) => {
+    document.querySelector("#comment-model").style.display = "block";
+
+    const commentReplyingTo = e.target.closest(".thread-card");
+    const seeRepliesElement =
+      commentReplyingTo.querySelector(".see-card-replies");
+    const parentCommentId = commentReplyingTo
+      .querySelector(".card-id")
+      .innerText.split(" ")[2];
+
+    document.querySelector(".comment-btn").addEventListener("click", (e) => {
+      const content = document.querySelector("#comment-text").value;
+      const threadId = document.querySelector(".view-thread-id").innerText;
+
+      request(
+        "comment",
+        "POST",
+        { content, threadId, parentCommentId },
+        token
+      ).then(() => {
+        const modal = document.querySelector("#comment-model");
+        modal.style.display = "none";
+        if (comment.childElementCount === 1) seeRepliesElement.click();
+        else {
+          seeRepliesElement.click();
+          seeRepliesElement.click();
+        }
+        modal.parentNode.replaceChild(modal.cloneNode(true), modal);
+      });
+    });
+  });
+};
 const viewThread = (threadId, userId) =>
   request(`thread?id=${threadId}`, "GET", "", token).then(
-    ({ title, content, isPublic, lock, likes, creatorId, id, watchees }) => {
-      if (likes.includes(userId)) {
-        document.querySelector("#like-thread-btn").style.background = "red";
-      } else {
-        document.querySelector("#like-thread-btn").style.background = "";
-      }
+    ({ title, content, likes, creatorId, id, watchees }) => {
+      document.querySelector("#like-thread-btn").style.background =
+        likes.includes(userId) ? "red" : "";
 
-      if (watchees.includes(userId)) {
-        document.querySelector("#watch-thread-btn").style.background = "red";
-      } else {
-        document.querySelector("#watch-thread-btn").style.background = "";
-      }
-      document.querySelector("#comments").innerHTML = "";
+      document.querySelector("#watch-thread-btn").style.background =
+        watchees.includes(userId) ? "red" : "";
+
+      document.querySelector("#edit-thread-btn").style.display =
+        creatorId === getUserId() ? "flex" : "none";
+
+      document.querySelector("#delete-thread-btn").style.display =
+        creatorId === getUserId() ? "flex" : "none";
+
       request(`comments?threadId=${threadId}`, "GET", "", token).then(
-        (comments) =>
+        (comments) => {
+          document.querySelector("#comments").innerHTML = "";
           comments
             .filter(({ parentCommentId }) => parentCommentId === null)
-            .forEach(
-              ({
-                content,
-                createdAt,
-                likes,
-                parentCommentId,
-                creatorId,
-                id,
-              }) => {
-                const card = document
-                  .querySelector(".comment-thread-container")
-                  .cloneNode(true);
-
-                card.style.display = "block";
-
-                card.querySelector(
-                  ".card-title"
-                ).innerText = `replied to ${parentCommentId}`;
-
-                card.querySelector(".card-id").innerText = ` comment id: ${id}`;
-
-                card.addEventListener("click", (e) => {
-                  const parentContainer = e.target.closest(
-                    ".comment-thread-container"
-                  );
-
-                  const commentReplyingTo = e.target.closest(".thread-card");
-
-                  const commentId = commentReplyingTo
-                    .querySelector(".card-id")
-                    .innerText.split(" ")[2];
-
-                  request(
-                    `comments?threadId=${threadId}`,
-                    "GET",
-                    "",
-                    token
-                  ).then((comments) => {
-                    const replies = comments.filter(
-                      (comment) => comment.parentCommentId == commentId
-                    );
-                    console.log(
-                      parentContainer.childElementCount,
-                      replies.length
-                    );
-                    if (
-                      parentContainer.childElementCount - 1 ===
-                      replies.length
-                    ) {
-                      return;
-                    }
-                    replies.forEach(
-                      ({
-                        title,
-                        content,
-                        isPublic,
-                        lock,
-                        likes,
-                        creatorId,
-                        id,
-                        watchees,
-                        parentCommentId,
-                      }) => {
-                        const card = document
-                          .querySelector(".comment-thread-container")
-                          .cloneNode(true);
-
-                        card.style.display = "block";
-                        const parentContainerMargin = parseInt(
-                          getComputedStyle(parentContainer).marginLeft
-                        );
-                        console.log(parentContainerMargin);
-                        card.style.marginLeft =
-                          parentContainerMargin + 30 + "px";
-
-                        card.querySelector(
-                          ".card-title"
-                        ).innerText = `replied to ${parentCommentId}`;
-
-                        card.querySelector(
-                          ".card-id"
-                        ).innerText = ` comment id: ${id}`;
-
-                        request(
-                          `user?userId=${creatorId}`,
-                          "GET",
-                          "",
-                          token
-                        ).then(({ email, image }) => {
-                          card.querySelector(".card-creator-name").innerText =
-                            email;
-                          card.querySelector("#card-img").src = image;
-                        });
-                        const rtf = new Intl.RelativeTimeFormat("en", {
-                          numeric: "auto",
-                        });
-                        const dateFromNow = getRelativeTimeString(
-                          new Date(createdAt)
-                        );
-                        card.querySelector(
-                          ".card-text"
-                        ).innerText = `content: ${content}, this comment was created: ${dateFromNow} `;
-
-                        card.querySelector(".card-body").style.flexDirection =
-                          "column";
-
-                        parentContainer.appendChild(card);
-                      }
-                    );
-                  });
-                });
-
-                request(`user?userId=${creatorId}`, "GET", "", token).then(
-                  ({ email, image }) => {
-                    card.querySelector(".card-creator-name").innerText = email;
-                    card.querySelector("#card-img").src = image;
-                  }
-                );
-                const rtf = new Intl.RelativeTimeFormat("en", {
-                  numeric: "auto",
-                });
-                const dateFromNow = getRelativeTimeString(new Date(createdAt));
-                card.querySelector(
-                  ".card-text"
-                ).innerText = `content: ${content}, this comment was created: ${dateFromNow} `;
-
-                card.querySelector(".card-body").style.flexDirection = "column";
-
-                // card.removeChild(card.querySelector(".card-header"));
-                document.querySelector("#comments").appendChild(card);
-              }
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
             )
+            .forEach((comment) => {
+              const parentCommentContainer = createComment(comment);
+              document
+                .querySelector("#comments")
+                .appendChild(parentCommentContainer);
+              handleCommentReply(parentCommentContainer);
+              handleCommentEdit(parentCommentContainer);
+              handleViewCommentReplies(parentCommentContainer, threadId);
+              handleCommentLike(parentCommentContainer);
+            });
+        }
       );
 
       document.querySelector(".view-thread-title").innerText = title;
@@ -279,13 +360,9 @@ const viewThread = (threadId, userId) =>
       document.querySelector(
         ".view-thread-likes"
       ).innerText = `${likes.length}`;
-      document.querySelector("#edit-thread-btn").style.display =
-        creatorId === getUserId() ? "flex" : "none";
-
-      document.querySelector("#delete-thread-btn").style.display =
-        creatorId === getUserId() ? "flex" : "none";
 
       document.querySelector(".view-thread-id").innerText = id;
+
       goToSubpage("view-thread");
     }
   );
@@ -310,7 +387,6 @@ document.querySelector("#login-btn").addEventListener("click", (e) => {
   e.preventDefault();
   const email = document.querySelector("#login-email").value;
   const password = document.querySelector("#login-password").value;
-
   request("auth/login", "POST", { email, password })
     .then((data) => {
       setToken(data);
@@ -351,10 +427,13 @@ document.querySelector("#register-btn").addEventListener("click", (e) => {
 });
 
 document
-  .querySelector("div.modal .close")
-  .addEventListener(
-    "click",
-    ({ target }) => (document.querySelector("div.modal").style.display = "none")
+  .querySelectorAll("div.modal .close")
+  .forEach((modal) =>
+    modal.addEventListener("click", ({ target }) =>
+      document
+        .querySelectorAll("div.modal")
+        .forEach((modal) => (modal.style.display = "none"))
+    )
   );
 
 document.querySelector("#logout-link").addEventListener("click", (e) => {
@@ -468,4 +547,22 @@ document.querySelector("#prev-button").addEventListener("click", () => {
     displayThreads(page - 5).then((msg) => {
       msg === "Success" ? (page = page - 5) : displayThreads(page);
     });
+});
+document.querySelector("#comment-btn").addEventListener("click", () => {
+  const commentText = document.querySelector("#comment-text-area").value;
+  const threadId = document.querySelector(".view-thread-id").innerText;
+  console.log(commentText, threadId);
+  request(
+    "comment",
+    "POST",
+    {
+      content: commentText,
+      threadId,
+      parentCommentId: null,
+    },
+    token
+  ).then(({ id }) => {
+    console.log("hey");
+    viewThread(threadId, getUserId());
+  });
 });

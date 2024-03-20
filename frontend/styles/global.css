@@ -4,8 +4,11 @@
   margin: 0px;
   padding: 0px;
   box-sizing: border-box;
+  font-family: "Roboto";
 }
-
+h1 {
+  font-weight: bold;
+}
 .link {
   color: red;
   text-decoration: none;
@@ -21,19 +24,26 @@ body {
 }
 header {
   position: fixed;
-  background-color: white;
+  background-color: #3e3e3e;
   top: 0px;
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0px 50px;
-  height: 80px;
+  height: 40px;
 }
-
+.card {
+  display: none;
+}
+div.modal {
+  display: none;
+}
 main {
-  margin-top: 5px;
+  margin-top: 35px;
   flex: 1;
+  height: 500px;
+  background-color: #29282b;
 }
 
 .modal {
@@ -48,7 +58,7 @@ main {
 }
 #main-content {
   flex: 4;
-  background-color: yellow;
+  background-color: grey;
 
   overflow: auto;
 }

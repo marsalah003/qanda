@@ -94,8 +94,8 @@ const getUserId = () => JSON.parse(localStorage.getItem("token")).userId;
 const removeToken = () => localStorage.removeItem("token");
 
 const displayError = (err) => {
-  document.querySelector("#err-model").querySelector("p").innerText = err;
-  document.querySelector("#err-model").style.display = "block";
+  document.querySelector("#err-modal").querySelector("p").innerText = err;
+  document.querySelector("#err-modal").style.display = "block";
 };
 
 const displayNav = (navType) => {
