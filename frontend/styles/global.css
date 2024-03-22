@@ -23,24 +23,23 @@ body {
   flex-direction: column;
 }
 header {
-  position: fixed;
-  background-color: #3e3e3e;
+  /* position: fixed;
   top: 0px;
   width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0px 50px;
-  height: 40px;
+  height: 40px; */
+  background: #3e3e3e;
+  /* height: 40px; */
 }
-.card {
-  display: none;
-}
+
 div.modal {
   display: none;
 }
 main {
-  margin-top: 35px;
+  /* margin-top: 35px; */
   flex: 1;
   height: 500px;
   background-color: #29282b;
@@ -53,14 +52,24 @@ main {
 #side-bar {
   background-color: red;
   flex: 1;
+  min-width: fit-content;
   display: flex;
   flex-direction: column;
 }
+#thread-list {
+  height: 400px;
+  overflow: auto;
+}
 #main-content {
-  flex: 4;
-  background-color: grey;
+  flex: 3;
+
+  background-color: #212529;
 
   overflow: auto;
+}
+
+#pagination-btns {
+  display: flex;
 }
 
 #auth-page {
@@ -76,33 +85,47 @@ main {
 nav {
   display: none;
 }
-#thread-list {
-  width: 400px;
-  height: 300px;
+
+.thread-interactives {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 5px;
-  overflow: auto;
 }
-.thread-card {
-  height: 80px;
-  margin: 0px !important;
-  cursor: pointer;
+.card-no-likes,
+.card-no-comments {
+  margin-left: 3px;
 }
-.card-body p,
 h5 {
   font-size: 10px !important;
   margin: 0px !important;
 }
 
-.card-body {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0px;
-  margin: 0px;
-}
 #view-thread-subpage {
   display: flex;
   flex-direction: column;
+}
+.comment-btns {
+  display: flex;
+}
+.comment-btn {
+  transform: scale(0.9);
+}
+
+.card-id {
+  display: none;
+}
+.navbar {
+  justify-content: flex-end;
+  gap: 10px;
+  height: 45px;
+}
+.logo {
+  margin-right: auto;
+
+  width: 45px !important;
+  height: 45px !important;
+}
+
+#auth-nav {
+  display: flex;
 }

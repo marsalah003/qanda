@@ -16,6 +16,7 @@ const pages = ["login", "register", "dashboard"];
 const subpages = ["create-thread"];
 let intervalId;
 let page = 0;
+let currentThread = localStorage.getItem("currentThread") || null;
 /*
     Helper functions
 */
@@ -64,6 +65,7 @@ const displayThreads = (start, threadsToInclude) => {
     request(`threads?start=${start}`, "GET", "", token).then((data) => {
       if (data.length === 0) resolve("No threads left to display");
       const threadIdPromises = [];
+
       for (const threadId of data) {
         if (threadsToInclude)
           if (!threadsToInclude.includes(threadId)) continue;
@@ -73,69 +75,67 @@ const displayThreads = (start, threadsToInclude) => {
       }
 
       Promise.all(threadIdPromises).then((data) =>
-        data.forEach(({ creatorId, title, createdAt, likes, id, name }) => {
+        data.forEach(({ creatorId, title, createdAt, likes, id }) =>
           request(`user?userId=${creatorId} `, "GET", "", token)
             .then(({ name }) => {
               const card = document
                 .querySelector(".thread-card")
                 .cloneNode(true);
-              card.style.display = "block";
-              card.querySelector(".card-header").innerText = title;
-              card.querySelector(".card-id").innerText = id;
-              request(`user?userId=${creatorId}`, "GET", "", token).then(
-                ({ email }) =>
-                  (card.querySelector(".card-creator-name").innerText = name)
-              );
 
-              card.querySelector(".card-text").innerText = `${createdAt}| ${
-                likes.length
-              } like${likes.length === 1 ? "" : "s"} `;
-              card.style.background = "grey";
+              card.style.display = "block";
+              card.querySelector(".card-title").innerText = title;
+              card.querySelector(".card-id").innerText = id;
+              card.querySelector(".card-creator-name").innerText = name;
+              card.querySelector(".card-timestamp").innerText = createdAt;
+
+              card.querySelector(".card-thread-created").innerText =
+                getRelativeTimeString(new Date(createdAt));
+
+              card.querySelector(".card-no-likes").innerText = likes.length;
+
+              request(`comments?threadId=${id}`, "GET", "", token)
+                .then(
+                  (comments) =>
+                    (card.querySelector(".card-no-comments").innerText =
+                      comments.length)
+                )
+                .catch((err) => displayError(err));
+
               document.querySelector("#thread-list").appendChild(card);
               resolve("Success");
               card.addEventListener("click", (e) => {
-                request(`thread?id=${id}`, "GET", "", token).then(
-                  ({ title, content, likes, id }) => {
-                    document
-                      .querySelectorAll(".thread-card")
-                      .forEach((e) => (e.style.background = "grey"));
-                    card.style.background = "yellow";
-                    viewThread(id, getUserId());
-                  }
-                );
+                document
+                  .querySelectorAll(".list-group-item")
+                  .forEach((e) => e.classList.remove("active"));
+                card
+                  .querySelector(".list-group-item")
+                  .classList.toggle("active");
+                viewThread(id, getUserId());
               });
             })
-
             .then(() => {
-              const list = document.querySelector("#thread-list");
-              [...list.children]
-                .sort((a, b) => {
-                  const date1 = new Date(
-                    a.querySelector(".card-text").innerText.split("|")[0]
-                  );
-
-                  const date2 = new Date(
-                    b.querySelector(".card-text").innerText.split("|")[0]
-                  );
-                  return date2.getTime() - date1.getTime();
-                })
-                .forEach((node) => {
-                  list.appendChild(node);
-                });
-            })
-            .then(() => {
-              document
-                .querySelectorAll(".card-creator-name")
-                .forEach((el) =>
-                  el.removeEventListener("click", handleUserNameClick)
-                );
               document
                 .querySelectorAll(".card-creator-name")
                 .forEach((el) =>
                   el.addEventListener("click", handleUserNameClick)
                 );
-            });
-        })
+            })
+            .then(() => {
+              const list = document.querySelector("#thread-list");
+              [...list.children]
+                .sort((a, b) => {
+                  const date1 = new Date(
+                    a.querySelector(".card-timestamp").innerText
+                  );
+
+                  const date2 = new Date(
+                    b.querySelector(".card-timestamp").innerText
+                  );
+                  return date2.getTime() - date1.getTime();
+                })
+                .forEach((node) => list.appendChild(node));
+            })
+        )
       );
     })
   );
@@ -162,141 +162,192 @@ const createComment = ({
 
   card.style.display = "block";
 
-  card.querySelector(".card-title").innerText = `replied to ${parentCommentId}`;
-
-  card.querySelector(".card-id").innerText = ` comment id: ${id}`;
+  card.querySelector(".parent").innerText = parentCommentId;
+  card.querySelector(".card-id").innerText = id;
 
   card.querySelector(".card-likes").innerText = likes.length;
 
-  card.querySelector("#like-card").style.background = likes.includes(
-    getUserId()
-  )
-    ? "red"
-    : "white";
+  const isLiked = likes.includes(getUserId());
+
+  card.querySelector(".bi-heart-fill").style.display = isLiked
+    ? "inline-block"
+    : "none";
+
+  card.querySelector(".bi-heart").style.display = isLiked
+    ? "none"
+    : "inline-block";
 
   request(`user?userId=${creatorId}`, "GET", "", token).then(
     ({ image, name }) => {
       card.querySelector(".card-creator-name").innerText = name;
-      card.querySelector("#card-img").src = image;
+      if (image) card.querySelector(".card-img").src = image;
     }
   );
   const rtf = new Intl.RelativeTimeFormat("en", {
     numeric: "auto",
   });
   const dateFromNow = getRelativeTimeString(new Date(createdAt));
-  card.querySelector(
-    ".card-text"
-  ).innerText = `content: ${content}, this comment was created: ${dateFromNow} `;
+  card.querySelector(".date").innerText = dateFromNow;
+  card.querySelector(".card-text").innerText = content;
 
-  card.querySelector(".card-body").style.flexDirection = "column";
   return card;
 };
 
-const handleViewCommentReplies = (comment, threadId) =>
-  comment.addEventListener("click", (e) => {
-    if (!Array.from(e.target.classList).includes("see-card-replies")) return;
-    const parentCommentContainer = e.target.closest(
-      ".comment-thread-container"
-    );
-    const commentReplyingTo = e.target.closest(".thread-card");
-    if (!commentReplyingTo) return;
+const handleViewCommentReplies = (comment, threadId) => {
+  comment
+    .querySelector(".see-card-replies")
+    .addEventListener("click", ({ target }) => {
+      const parentElement = target.closest(".comment-thread-container");
 
-    const commentId = commentReplyingTo
-      .querySelector(".card-id")
-      .innerText.split(" ")[2];
+      const commentId = parentElement.querySelector(".card-id").innerText;
 
-    if (parentCommentContainer.childElementCount > 1)
-      return parentCommentContainer
-        .querySelectorAll(".comment-thread-container")
-        .forEach((el) => {
-          parentCommentContainer.removeChild(el);
-        });
+      const repliesBtnMessage = target
+        .closest(".card-body")
+        .querySelector(".replies-btn-message");
 
-    request(`comments?threadId=${threadId}`, "GET", "", token).then(
-      (comments) =>
-        comments
-          .filter((comment) => comment.parentCommentId == commentId)
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-          .forEach((comment) => {
-            const newComment = createComment(comment);
+      if (parentElement.childElementCount > 1) {
+        repliesBtnMessage.innerText = "See Replies";
+        return parentElement
+          .querySelectorAll(":scope > .comment-thread-container")
+          .forEach((el) => parentElement.removeChild(el));
+      }
 
-            const commentReplyingTo = parseInt(
-              getComputedStyle(parentCommentContainer).marginLeft
+      request(`comments?threadId=${threadId}`, "GET", "", token).then(
+        (comments) => {
+          const replies = comments.filter(
+            (comment) => comment.parentCommentId == commentId
+          );
+          if (replies.length !== 0)
+            repliesBtnMessage.innerText = "Hide Replies";
+
+          replies
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            )
+            .forEach((commentObj) => {
+              const newComment = createComment(commentObj);
+              if (commentObj.creatorId == getUserId()) {
+                newComment.querySelector(".remove-card-btn").style.display =
+                  "block";
+                newComment.querySelector("#edit-card").style.display = "block";
+              }
+              const parentMargin = parseInt(
+                getComputedStyle(comment).marginLeft
+              );
+
+              newComment.style.marginLeft = parentMargin + 30 + "px";
+
+              target
+                .closest(".comment-thread-container")
+                .appendChild(newComment);
+
+              handleCommentReply(newComment);
+              handleViewCommentReplies(newComment, threadId);
+              handleCommentEdit(newComment);
+              handleCommentLike(newComment);
+              handleCommentRemove(newComment);
+            });
+        }
+      );
+    });
+};
+const removeComment = (id, threadId) =>
+  new Promise((resolve) =>
+    request("comment", "DELETE", { id }, token)
+      .then(() => {
+        request(`comments?threadId=${threadId}`, "GET", "", token).then(
+          (comments) => {
+            const replies = comments.filter(
+              ({ parentCommentId }) => parentCommentId == id
             );
+            console.log(comments, replies, id, threadId);
+            if (replies.length === 0) return resolve();
+            replies.forEach(({ id }) =>
+              removeComment(id, threadId).then(() => resolve())
+            );
+          }
+        );
+      })
+      .catch((err) =>
+        console.log(`an error occured as a comment was being removed: ${err} `)
+      )
+  );
 
-            newComment.style.marginLeft = commentReplyingTo + 30 + "px";
-            parentCommentContainer.appendChild(newComment);
-
-            handleCommentReply(newComment);
-            handleCommentEdit(newComment);
-            handleCommentLike(newComment);
-          })
+const handleCommentRemove = (comment) =>
+  comment.querySelector(".remove-card-btn").addEventListener("click", () => {
+    const threadId = document.querySelector(".view-thread-id").innerText;
+    const commentId = comment.querySelector(".card-id").innerText;
+    console.log("hey");
+    removeComment(parseInt(commentId), threadId).then(() =>
+      viewThread(threadId, getUserId())
     );
   });
-
 const handleCommentLike = (comment) => {
-  comment.querySelector("#like-card").addEventListener("click", (e) => {
-    const commentId = e.target
-      .closest(".thread-card")
-      .querySelector(".card-id")
-      .innerText.split(" ")[2];
+  comment.querySelector("#like-btn").addEventListener("click", (e) => {
+    const likedElement = comment.querySelector(".liked");
+    const unlikedElement = comment.querySelector(".unliked");
 
-    const isLiked = !(e.target.style.background === "red");
+    const commentId = comment.querySelector(".card-id").innerText;
+
+    const isLiked =
+      comment.querySelector(".bi-heart-fill").style.display === "inline-block";
+
+    comment.querySelector(".bi-heart-fill").style.display = isLiked
+      ? "none"
+      : "inline-block";
+
+    comment.querySelector(".bi-heart").style.display = isLiked
+      ? "inline-block"
+      : "none";
 
     request(
       "comment/like",
       "PUT",
-      { id: commentId, turnon: isLiked },
+      { id: commentId, turnon: !isLiked },
       token
     ).then(() => {
-      e.target.style.background = isLiked ? "red" : "white";
-      const likes = parseInt(
-        e.target.closest(".thread-card").querySelector(".card-likes").innerText
-      );
+      const likes = parseInt(comment.querySelector(".card-likes").innerText);
 
-      e.target.closest(".thread-card").querySelector(".card-likes").innerText =
-        likes + (isLiked ? 1 : -1);
+      comment.querySelector(".card-likes").innerText =
+        likes + (isLiked ? -1 : 1);
     });
   });
 };
 const handleCommentEdit = (comment) => {
-  comment.querySelector("#edit-card").addEventListener("click", (e) => {
-    const commentId = e.target
-      .closest(".thread-card")
-      .querySelector(".card-id")
-      .innerText.split(" ")[2];
-    document.querySelector("#comment-model").style.display = "block";
-    document.querySelector(".comment-btn").addEventListener("click", (e) => {
-      const content = document.querySelector("#comment-text").value;
-      const threadId = document.querySelector(".view-thread-id").innerText;
+  comment
+    .querySelector("#edit-card")
+    .addEventListener("click", ({ target }) => {
+      const commentId = target
+        .closest(".card-body")
+        .querySelector(".card-id").innerText;
 
-      request("comment", "PUT", { id: commentId, content }, token).then(() => {
-        comment.querySelector(".card-text").innerText = content;
-        const modal = document.querySelector("#comment-model");
-        modal.style.display = "none";
-        modal.parentNode.replaceChild(modal.cloneNode(true), modal);
+      document.querySelector("#comment-model").style.display = "block";
+      document.querySelector(".comment-btn").addEventListener("click", (e) => {
+        const content = document.querySelector("#comment-text").value;
+        const threadId = document.querySelector(".view-thread-id").innerText;
+
+        request("comment", "PUT", { id: commentId, content }, token).then(
+          () => {
+            comment.querySelector(".card-text").innerText = content;
+            const modal = document.querySelector("#comment-model");
+
+            modal.style.display = "none";
+            modal.parentNode.replaceChild(modal.cloneNode(true), modal);
+          }
+        );
       });
     });
-  });
 };
 const handleCommentReply = (comment) => {
-  comment.querySelector("#reply-to-card").addEventListener("click", (e) => {
+  comment.querySelector(".reply-to-card").addEventListener("click", (e) => {
     document.querySelector("#comment-model").style.display = "block";
-
-    const commentReplyingTo = e.target.closest(".thread-card");
-    const seeRepliesElement =
-      commentReplyingTo.querySelector(".see-card-replies");
-    const parentCommentId = commentReplyingTo
-      .querySelector(".card-id")
-      .innerText.split(" ")[2];
-
+    const seeRepliesElement = comment.querySelector(".see-card-replies");
+    const parentCommentId = comment.querySelector(".card-id").innerText;
     document.querySelector(".comment-btn").addEventListener("click", (e) => {
       const content = document.querySelector("#comment-text").value;
       const threadId = document.querySelector(".view-thread-id").innerText;
-
       request(
         "comment",
         "POST",
@@ -305,6 +356,7 @@ const handleCommentReply = (comment) => {
       ).then(() => {
         const modal = document.querySelector("#comment-model");
         modal.style.display = "none";
+
         if (comment.childElementCount === 1) seeRepliesElement.click();
         else {
           seeRepliesElement.click();
@@ -318,6 +370,7 @@ const handleCommentReply = (comment) => {
 const viewThread = (threadId, userId) =>
   request(`thread?id=${threadId}`, "GET", "", token).then(
     ({ title, content, likes, creatorId, id, watchees }) => {
+      localStorage.setItem("currentThread", threadId);
       document.querySelector("#like-thread-btn").style.background =
         likes.includes(userId) ? "red" : "";
 
@@ -342,13 +395,22 @@ const viewThread = (threadId, userId) =>
             )
             .forEach((comment) => {
               const parentCommentContainer = createComment(comment);
+              if (comment.creatorId == getUserId()) {
+                parentCommentContainer.querySelector(
+                  ".remove-card-btn"
+                ).style.display = "block";
+                parentCommentContainer.querySelector(
+                  "#edit-card"
+                ).style.display = "block";
+              }
               document
                 .querySelector("#comments")
                 .appendChild(parentCommentContainer);
+              handleViewCommentReplies(parentCommentContainer, threadId);
               handleCommentReply(parentCommentContainer);
               handleCommentEdit(parentCommentContainer);
-              handleViewCommentReplies(parentCommentContainer, threadId);
               handleCommentLike(parentCommentContainer);
+              handleCommentRemove(parentCommentContainer);
             });
         }
       );
@@ -372,7 +434,10 @@ const viewThread = (threadId, userId) =>
 */
 let token = JSON.parse(localStorage.getItem("token"))?.token;
 
-goToPage(token ? "dashboard" : "login");
+if (currentThread && token) viewThread(currentThread, getUserId());
+else {
+  goToPage(token ? "dashboard" : "login");
+}
 
 document.querySelectorAll("header .normal-link").forEach((link) =>
   link.addEventListener("click", (e) => {
@@ -462,8 +527,8 @@ document.querySelector("#submit-thread-btn").addEventListener("click", (e) => {
   )
     .then(({ id }) => {
       viewThread(id, getToken());
+      displayThreads(page);
     })
-
     .catch((err) => displayError(err));
 });
 
@@ -551,7 +616,6 @@ document.querySelector("#prev-button").addEventListener("click", () => {
 document.querySelector("#comment-btn").addEventListener("click", () => {
   const commentText = document.querySelector("#comment-text-area").value;
   const threadId = document.querySelector(".view-thread-id").innerText;
-  console.log(commentText, threadId);
   request(
     "comment",
     "POST",
@@ -562,7 +626,6 @@ document.querySelector("#comment-btn").addEventListener("click", () => {
     },
     token
   ).then(({ id }) => {
-    console.log("hey");
     viewThread(threadId, getUserId());
   });
 });

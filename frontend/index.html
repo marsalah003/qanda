@@ -31,6 +31,13 @@
       media="screen"
       href="styles/global.css"
     />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="./styles/custom.css"
+    />
+    <script src="./src/custom.js"></script>
   </head>
   <body>
     <!-- Templates -->
@@ -85,48 +92,200 @@
     </div>
 
     <div
-      class="card text-white mb-3 thread-card"
-      style="max-width: 18rem"
+      class="list-group list-group-flush border-bottom scrollarea thread-card"
       style="display: none"
     >
-      <div class="card-header">Header</div>
-      <div class="card-body">
-        <p class="card-text">
-          Some quick example text to build on the card title and make up the
-          bulk of the card's content.
-        </p>
-        <p class="card-id"></p>
-        <p
-          class="card-creator-name"
-          style="background-color: black; font-size: 20px !important"
-        ></p>
-        <img src="" alt="" id="card-img" style="width: 40px" />
-      </div>
-    </div>
-    <div class="comment-thread-container" style="display: none">
-      <div
-        class="card text-white bg-secondary mb-3 thread-card"
-        style="max-width: 18rem"
+      <a
+        href="#"
+        class="list-group-item list-group-item-action py-3 lh-sm"
+        aria-current="true"
       >
-        <div class="card-body" style="height: 300px">
-          <h5 class="card-title">Primary card title</h5>
-          <p class="card-text">
-            Some quick example text to build on the card title and make up the
-            bulk of the card's content.
-          </p>
-          <p class="card-id"></p>
-          <span style="font-size: 5px">Number of likes:</span>
-          <p class="card-likes"></p>
-          <p
-            class="card-creator-name"
-            style="background-color: black; font-size: 10px !important"
-          ></p>
-          <img src="" alt="" id="card-img" style="width: 40px" />
-          <div class="card-btns" style="display: flex">
-            <button class="see-card-replies">see replies</button>
-            <button id="reply-to-card">Reply</button>
-            <button id="edit-card">Edit</button>
-            <button id="like-card">Like</button>
+        <div class="d-flex w-100 align-items-center justify-content-between">
+          <strong class="mb-1 card-title">List group item heading</strong>
+          <small class="card-thread-created">Wed</small>
+          <span class="card-timestamp" style="display: none"></span>
+        </div>
+        <span class="card-id" style="display: none"></span>
+        <div
+          class="col-10 mb-1 small card-creator-name"
+          style="width: fit-content"
+        >
+          Some placeholder content in a paragraph below the heading and date.
+        </div>
+        <div class="thread-interactives">
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-heart"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"
+              /></svg
+            ><span class="card-no-likes">0</span>
+          </div>
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-chat-fill"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097 1.016-.417 2.13-.771 2.966-.079.186.074.394.273.362 2.256-.37 3.597-.938 4.18-1.234A9 9 0 0 0 8 15"
+              /></svg
+            ><span class="card-no-comments">0</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="comment-thread-container" style="display: none">
+      <div class="card mb-3">
+        <div class="card-body">
+          <span class="card-id"></span>
+          <div class="d-flex flex-start">
+            <img
+              class="rounded-circle shadow-1-strong me-3 card-img"
+              src="https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
+              alt="avatar"
+              style="width: 40px; height: 40px"
+            />
+            <div class="w-100">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3"
+              >
+                <h6 class="text-primary fw-bold mb-0">
+                  <span class="card-creator-name">lara_stewart</span>
+                  <span class="text-light ms-2 card-text"
+                    >Hmm, This poster looks cool</span
+                  >
+                  <span class="parent"></span>
+                </h6>
+                <p class="mb-0 date">2 days ago</p>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <p class="small mb-0 comment-btns" style="color: #aaa">
+                  <button
+                    type="button"
+                    role=""
+                    class="btn btn-secondary comment-btn"
+                    id="edit-card"
+                    style="display: none"
+                  >
+                    Edit
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      class="bi bi-pencil-square"
+                      viewBox="0 0 16 16"
+                    >
+                      <path
+                        d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
+                      />
+                      <path
+                        fill-rule="evenodd"
+                        d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary comment-btn reply-to-card"
+                  >
+                    Reply
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      class="bi bi-reply-fill"
+                      viewBox="0 0 16 16"
+                    >
+                      <path
+                        d="M5.921 11.9 1.353 8.62a.72.72 0 0 1 0-1.238L5.921 4.1A.716.716 0 0 1 7 4.719V6c1.5 0 6 0 7 8-2.5-4.5-7-4-7-4v1.281c0 .56-.606.898-1.079.62z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary comment-btn"
+                    id="like-btn"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      class="bi bi-heart"
+                      viewBox="0 0 16 16"
+                    >
+                      <path
+                        d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"
+                      />
+                    </svg>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      class="bi bi-heart-fill"
+                      viewBox="0 0 16 16"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314"
+                      />
+                    </svg>
+
+                    <span class="card-likes">0</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary comment-btn see-card-replies"
+                  >
+                    <span class="replies-btn-message">See Replies</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      class="bi bi-chat-dots-fill"
+                      viewBox="0 0 16 16"
+                    >
+                      <path
+                        d="M16 8c0 3.866-3.582 7-8 7a9 9 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7M5 8a1 1 0 1 0-2 0 1 1 0 0 0 2 0m4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger comment-btn remove-card-btn"
+                    style="display: none"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      fill="currentColor"
+                      class="bi bi-trash3-fill"
+                      viewBox="0 0 16 16"
+                    >
+                      <path
+                        d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"
+                      />
+                    </svg>
+                  </button>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -137,7 +296,67 @@
     <!-- This is an example app structure, you can modify this as much as you choose -->
 
     <header>
-      <h1>QandA</h1>
+      <div class="container">
+        <div
+          class="d-flex align-items-flex-start navbar"
+          style="align-items: flex-start; padding: 0px"
+        >
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/QANDA_old_Logo.png/768px-QANDA_old_Logo.png"
+            alt="QandA logo"
+            class="logo"
+          />
+
+          <div class="nav" role="navigation">
+            <button
+              type="button"
+              class="btn btn-outline-light me-2"
+              id="login-link"
+            >
+              Login
+            </button>
+            <button type="button" class="btn btn-warning" id="register-link">
+              Register
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-warning auth-nav"
+            id="dashboard-link"
+          >
+            Dashboard
+          </button>
+
+          <h2 class="header-user-name auth-nav"></h2>
+
+          <div role="navigation" class="auth-nav">
+            <div class="dropdown text-end">
+              <a
+                href="#"
+                class="d-block link-body-emphasis text-decoration-none dropdown-toggle"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <img
+                  src="https://github.com/mdo.png"
+                  alt="mdo"
+                  width="32"
+                  height="32"
+                  class="rounded-circle"
+                />
+              </a>
+              <ul class="dropdown-menu text-small">
+                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li>
+                  <a class="dropdown-item" href="#" id="logout-link">Log out</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <h1>QandA</h1>
       <h2 class="header-user-name"></h2>
       <nav id="auth-nav">
         <a href="#" id="dashboard-link" class="link auth-link normal-link"
@@ -148,7 +367,7 @@
       <nav id="nav">
         <a href="#" id="login-link" class="link normal-link">Login</a>|
         <a href="#" id="register-link" class="link normal-link">Register</a>
-      </nav>
+      </nav> -->
     </header>
     <main role="main">
       <div id="login-page" class="page">
@@ -204,16 +423,31 @@
         </form>
       </div>
       <div id="auth-page" class="page">
+        <div class="b-example-divider b-example-vr"></div>
         <div id="side-bar">
-          <h1>Sidebar</h1>
           <button id="thread-create-btn">Create a Thread</button>
-          <button id="next-button">Next</button>
-          <button id="prev-button">Prev</button>
-          <div id="thread-list"></div>
+
+          <div
+            class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary thread-container"
+            style="width: 380px"
+          >
+            <a
+              href="/"
+              class="d-flex align-items-center flex-shrink-0 p-3 link-body-emphasis text-decoration-none border-bottom"
+            >
+              <div class="fs-5 fw-semibold">List group</div>
+              <div id="pagination-btns"></div>
+            </a>
+            <button id="next-button">Next</button>
+            <button id="prev-button">Prev</button>
+            <span id="thread-list"></span>
+          </div>
         </div>
         <div id="main-content">
           <div id="dashboard-subpage" class="subpage"><h1>Dashboard</h1></div>
-          <div id="user-subpage" class="subpage">User Sub Page</div>
+          <div id="user-subpage" class="subpage">
+            <h1>User Sub Page</h1>
+          </div>
           <div id="create-thread-subpage" class="subpage">
             <h1>Create Thread page</h1>
             <form action="POST">

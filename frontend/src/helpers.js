@@ -100,10 +100,12 @@ const displayError = (err) => {
 
 const displayNav = (navType) => {
   document
-    .querySelectorAll("nav")
+    .querySelectorAll(".nav, .auth-nav")
     .forEach((nav) => (nav.style.display = "none"));
-
-  document.querySelector(`#${navType}`).style.display = "block";
+  console.log(navType);
+  document.querySelectorAll(`.${navType}`).forEach((element) => {
+    element.style.display = "block";
+  });
 };
 
 export {
