@@ -102,16 +102,20 @@
       >
         <div class="d-flex w-100 align-items-center justify-content-between">
           <strong class="mb-1 card-title">List group item heading</strong>
+
           <small class="card-thread-created">Wed</small>
           <span class="card-timestamp" style="display: none"></span>
         </div>
         <span class="card-id" style="display: none"></span>
+
         <div
           class="col-10 mb-1 small card-creator-name"
           style="width: fit-content"
         >
           Some placeholder content in a paragraph below the heading and date.
         </div>
+        <span class="card-user-id" style="background: red"> </span>
+
         <div class="thread-interactives">
           <div>
             <svg
@@ -162,6 +166,7 @@
               >
                 <h6 class="text-primary fw-bold mb-0">
                   <span class="card-creator-name">lara_stewart</span>
+                  <span class="card-user-id" style="background: red"> </span>
                   <span class="text-light ms-2 card-text"
                     >Hmm, This poster looks cool</span
                   >
@@ -181,8 +186,8 @@
                     Edit
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
+                      width="12"
+                      height="12"
                       fill="currentColor"
                       class="bi bi-pencil-square"
                       viewBox="0 0 16 16"
@@ -203,8 +208,8 @@
                     Reply
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
+                      width="12"
+                      height="12"
                       fill="currentColor"
                       class="bi bi-reply-fill"
                       viewBox="0 0 16 16"
@@ -221,8 +226,8 @@
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
+                      width="12"
+                      height="12"
                       fill="currentColor"
                       class="bi bi-heart"
                       viewBox="0 0 16 16"
@@ -233,8 +238,8 @@
                     </svg>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
+                      width="12"
+                      height="12"
                       fill="currentColor"
                       class="bi bi-heart-fill"
                       viewBox="0 0 16 16"
@@ -254,8 +259,8 @@
                     <span class="replies-btn-message">See Replies</span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
+                      width="12"
+                      height="12"
                       fill="currentColor"
                       class="bi bi-chat-dots-fill"
                       viewBox="0 0 16 16"
@@ -272,8 +277,8 @@
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
+                      width="12"
+                      height="12"
                       fill="currentColor"
                       class="bi bi-trash3-fill"
                       viewBox="0 0 16 16"
@@ -298,7 +303,7 @@
     <header>
       <div class="container">
         <div
-          class="d-flex align-items-flex-start navbar"
+          class="d-flex align-items-center navbar"
           style="align-items: flex-start; padding: 0px"
         >
           <img
@@ -315,7 +320,7 @@
             >
               Login
             </button>
-            <button type="button" class="btn btn-warning" id="register-link">
+            <button type="button" class="btn btn-light" id="register-link">
               Register
             </button>
           </div>
@@ -339,15 +344,17 @@
                 aria-expanded="false"
               >
                 <img
-                  src="https://github.com/mdo.png"
-                  alt="mdo"
+                  src="https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg"
+                  alt="profile-pic"
                   width="32"
                   height="32"
-                  class="rounded-circle"
+                  class="rounded-circle profile_img"
                 />
               </a>
               <ul class="dropdown-menu text-small">
-                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li>
+                  <a class="dropdown-item profile-btn" href="#">Profile</a>
+                </li>
                 <li>
                   <a class="dropdown-item" href="#" id="logout-link">Log out</a>
                 </li>
@@ -356,25 +363,13 @@
           </div>
         </div>
       </div>
-      <!-- <h1>QandA</h1>
-      <h2 class="header-user-name"></h2>
-      <nav id="auth-nav">
-        <a href="#" id="dashboard-link" class="link auth-link normal-link"
-          >Dashboard</a
-        >|
-        <a href="#" id="logout-link" class="link auth-link">Logout</a>
-      </nav>
-      <nav id="nav">
-        <a href="#" id="login-link" class="link normal-link">Login</a>|
-        <a href="#" id="register-link" class="link normal-link">Register</a>
-      </nav> -->
     </header>
     <main role="main">
       <div id="login-page" class="page">
-        <h1>login page</h1>
+        <h1>login</h1>
         <form role="login" method="post">
           <div class="row mb-3">
-            <label for="inputEmail3" class="col-sm-2 col-form-label"
+            <label for="login-email" class="col-sm-2 col-form-label"
               >Email</label
             >
             <div class="col-sm-10">
@@ -387,7 +382,7 @@
             </div>
           </div>
           <div class="row mb-3">
-            <label for="inputPassword3" class="col-sm-2 col-form-label"
+            <label for="login-password" class="col-sm-2 col-form-label"
               >Password</label
             >
             <div class="col-sm-10">
@@ -405,41 +400,87 @@
         </form>
       </div>
       <div id="register-page" class="page">
-        <h1>Register page</h1>
+        <h1>Register</h1>
         <form id="register-form" method="post">
-          <label for="register-email">Email:</label>
-          <input type="text" id="register-email" placeholder="blah@gmail.com" />
-          <br />
-          <label for="register-name">Name:</label>
-          <input type="text" id="register-name" />
-          <br />
-          <label for="register-password">Password:</label>
-          <input type="password" id="register-password" />
-          <br />
-          <label for="register-password-confirm">Confirm Password::</label>
-          <input type="password" id="register-password-confirm" />
-          <br />
-          <button type="submit" id="register-btn">Submit</button>
+          <div class="row mb-3">
+            <label for="register-email" class="col-sm-2 col-form-label"
+              >Email</label
+            >
+            <div class="col-sm-10">
+              <input
+                type="email"
+                class="form-control"
+                placeholder="blah@gmail.com"
+                id="register-email"
+              />
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="register-name" class="col-sm-2 col-form-label"
+              >name</label
+            >
+            <div class="col-sm-10">
+              <input
+                type="text"
+                class="form-control"
+                id="register-name"
+                required
+              />
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label for="register-password" class="col-sm-2 col-form-label"
+              >Password</label
+            >
+            <div class="col-sm-10">
+              <input
+                type="password"
+                class="form-control"
+                id="register-password"
+                required
+              />
+            </div>
+          </div>
+          <div class="row mb-3">
+            <label
+              for="register-password-confirm"
+              class="col-sm-2 col-form-label"
+              >Confirm Password</label
+            >
+            <div class="col-sm-10">
+              <input
+                type="password"
+                class="form-control"
+                id="register-password-confirm"
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="register-btn">
+            Register
+          </button>
         </form>
       </div>
       <div id="auth-page" class="page">
         <div class="b-example-divider b-example-vr"></div>
         <div id="side-bar">
-          <button id="thread-create-btn">Create a Thread</button>
+          <button id="thread-create-btn" class="btn btn-dark">
+            Create a thread
+          </button>
 
           <div
             class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary thread-container"
-            style="width: 380px"
+            style="width: 320px"
           >
-            <a
-              href="/"
-              class="d-flex align-items-center flex-shrink-0 p-3 link-body-emphasis text-decoration-none border-bottom"
-            >
-              <div class="fs-5 fw-semibold">List group</div>
-              <div id="pagination-btns"></div>
-            </a>
-            <button id="next-button">Next</button>
-            <button id="prev-button">Prev</button>
+            <div class="btn-group" role="group" aria-label="Basic example">
+              <button
+                type="button"
+                class="btn btn-outline-light"
+                id="load-more-threads-btn"
+              >
+                Load More Threads
+              </button>
+            </div>
             <span id="thread-list"></span>
           </div>
         </div>
@@ -447,6 +488,100 @@
           <div id="dashboard-subpage" class="subpage"><h1>Dashboard</h1></div>
           <div id="user-subpage" class="subpage">
             <h1>User Sub Page</h1>
+            Email:
+            <p class="user-email"></p>
+            Name:
+            <p class="user-name"></p>
+            image:
+            <img src="" alt="" class="user-img" />
+
+            <div id="user-thread-list"></div>
+
+            <form
+              id="user-form"
+              class="hide-by-default"
+              method="post"
+              style="display: none"
+            >
+              <h1>Update Profile</h1>
+              <div class="row mb-3">
+                <label for="user-email" class="col-sm-2 col-form-label"
+                  >Email</label
+                >
+                <div class="col-sm-10">
+                  <input
+                    type="email"
+                    class="form-control"
+                    placeholder="blah@gmail.com"
+                    id="user-email"
+                  />
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="user-name" class="col-sm-2 col-form-label"
+                  >name</label
+                >
+                <div class="col-sm-10">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="user-name"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="user-password" class="col-sm-2 col-form-label"
+                  >Password</label
+                >
+                <div class="col-sm-10">
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="user-password"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <label for="user-img" class="col-sm-2 col-form-label"
+                  >img</label
+                >
+                <div class="col-sm-10">
+                  <input
+                    type="file"
+                    class="form-control"
+                    id="user-img"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="user-btn">
+                Update
+              </button>
+            </form>
+            <div
+              class="user-permission-change"
+              style="display: none"
+              class="hide-by-default"
+            >
+              <select
+                class="user-permission-select"
+                aria-label="Default select example"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                id="user-permission-btn"
+              >
+                Update
+              </button>
+            </div>
           </div>
           <div id="create-thread-subpage" class="subpage">
             <h1>Create Thread page</h1>
@@ -465,24 +600,101 @@
           <div id="view-thread-subpage" class="subpage">
             <h1 class="view-thread-title">Title</h1>
             <p class="view-thread-content">Body Content</p>
-            <h3 class="view-thread-likes">No of likes</h3>
-            thread Id:
-            <p class="view-thread-id"></p>
+            <p class="view-thread-id" style="display: none"></p>
             thread creator:
             <p class="view-thread-creator"></p>
-            <button id="delete-thread-btn">Delete</button>
-            <button id="edit-thread-btn">Edit</button>
-            <button id="watch-thread-btn">Watch</button>
-            <button id="like-thread-btn">Like</button>
+
+            <div class="thread-btn-container">
+              <button
+                type="button"
+                id="edit-thread-btn"
+                class="btn btn-secondary"
+              >
+                Edit
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-pencil-square"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
+                  />
+                  <path
+                    fill-rule="evenodd"
+                    d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+                  />
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                id="watch-thread-btn"
+                class="btn btn-primary"
+              >
+                Watch
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="like-thread-btn"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-heart heart"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"
+                  />
+                </svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-heart-fill heart"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314"
+                  />
+                </svg>
+
+                <span class="thread-likes">0</span>
+              </button>
+              <button
+                type="button"
+                id="delete-thread-btn"
+                class="btn btn-danger"
+              >
+                Delete Thread
+              </button>
+            </div>
             <div id="comments"></div>
             <div id="comment-area">
-              <textarea
-                name=""
-                id="comment-text-area"
-                cols="30"
-                rows="10"
-              ></textarea>
-              <button id="comment-btn">Comments</button>
+              <div class="input-group text-area">
+                <span class="input-group-text">
+                  <button
+                    type="button"
+                    id="comment-btn"
+                    class="btn btn-primary"
+                  >
+                    Comment
+                  </button></span
+                >
+                <textarea
+                  class="form-control"
+                  aria-label="With textarea"
+                  id="comment-text-area"
+                ></textarea>
+              </div>
             </div>
           </div>
           <div id="edit-thread-subpage" class="subpage">

@@ -16,6 +16,7 @@ const pages = ["login", "register", "dashboard"];
 const subpages = ["create-thread"];
 let intervalId;
 let page = 0;
+let currentPage;
 let currentThread = localStorage.getItem("currentThread") || null;
 /*
     Helper functions
@@ -40,8 +41,10 @@ const goToPage = (page) => {
 
 const goToSubpage = (subpage) => {
   request(`user?userId=${getUserId()}`, "GET", "", token).then(
-    ({ email }) =>
-      (document.querySelector(".header-user-name").innerText = email)
+    ({ email, image }) => {
+      document.querySelector(".header-user-name").innerText = email;
+      if (image) document.querySelector(".profile_img").src = image;
+    }
   );
   if (!document.querySelector(`#${subpage}-subpage`).style.display) {
     displayThreads(page);
@@ -51,7 +54,9 @@ const goToSubpage = (subpage) => {
     displayThreads(page);
   }, 1000 * 30);
   goToPage("auth");
-
+  document
+    .querySelectorAll(".hide-by-default")
+    .forEach((el) => (el.style.display = "none"));
   document
     .querySelectorAll("#main-content > .subpage")
     .forEach((subpage) => (subpage.style.display = "none"));
@@ -59,11 +64,11 @@ const goToSubpage = (subpage) => {
   document.querySelector(`#${subpage}-subpage`).style.display = "flex";
 };
 const displayThreads = (start, threadsToInclude) => {
-  document.querySelector("#thread-list").innerHTML = "";
+  // document.querySelector("#thread-list").innerHTML = "";
 
   return new Promise((resolve) =>
     request(`threads?start=${start}`, "GET", "", token).then((data) => {
-      if (data.length === 0) resolve("No threads left to display");
+      if (data.length === 0) resolve({ success: false });
       const threadIdPromises = [];
 
       for (const threadId of data) {
@@ -87,6 +92,7 @@ const displayThreads = (start, threadsToInclude) => {
               card.querySelector(".card-id").innerText = id;
               card.querySelector(".card-creator-name").innerText = name;
               card.querySelector(".card-timestamp").innerText = createdAt;
+              card.querySelector(".card-user-id").innerText = creatorId;
 
               card.querySelector(".card-thread-created").innerText =
                 getRelativeTimeString(new Date(createdAt));
@@ -102,7 +108,7 @@ const displayThreads = (start, threadsToInclude) => {
                 .catch((err) => displayError(err));
 
               document.querySelector("#thread-list").appendChild(card);
-              resolve("Success");
+              resolve({ success: false });
               card.addEventListener("click", (e) => {
                 document
                   .querySelectorAll(".list-group-item")
@@ -141,10 +147,59 @@ const displayThreads = (start, threadsToInclude) => {
   );
 };
 const handleUserNameClick = (e) => {
-  e.stopPropagation();
+  let targetUserId;
+  if (typeof e === "object") {
+    e.stopPropagation();
+    targetUserId = e.target.nextElementSibling.innerText;
+  } else {
+    targetUserId = e;
+  }
 
-  request();
-  goToSubpage("user");
+  const isOwnProfile = targetUserId == getUserId();
+
+  const promises = [];
+
+  promises.push(request(`user?userId=${targetUserId}`, "GET", "", token));
+  promises.push(request(`user?userId=${getUserId()}`, "GET", "", token));
+
+  Promise.all(promises).then(
+    ([
+      { admin: isTargetAdmin, name, email, image },
+      { admin: isUserAdmin },
+    ]) => {
+      goToSubpage("user");
+      if (isOwnProfile)
+        document.querySelector("#user-form").style.display = "block";
+
+      if (isUserAdmin && !isOwnProfile) {
+        document
+          .querySelector("#user-permission-btn")
+          .addEventListener("click", (e) => {
+            const updatedRole = document.querySelector(
+              ".user-permission-select"
+            ).value;
+            request(
+              `user/admin`,
+              "PUT",
+              {
+                turnon: updatedRole === "admin",
+                userId: targetUserId,
+              },
+              token
+            );
+          });
+        document.querySelector(".user-permission-change").style.display =
+          "block";
+        document.querySelector(".user-permission-select").value = isTargetAdmin
+          ? "admin"
+          : "user";
+      }
+      document.querySelector(".user-email").innerText = email;
+      document.querySelector(".user-name").innerText = name;
+
+      document.querySelector(".user-img").src = image;
+    }
+  );
 };
 
 const createComment = ({
@@ -164,7 +219,7 @@ const createComment = ({
 
   card.querySelector(".parent").innerText = parentCommentId;
   card.querySelector(".card-id").innerText = id;
-
+  card.querySelector(".card-user-id").innerText = creatorId;
   card.querySelector(".card-likes").innerText = likes.length;
 
   const isLiked = likes.includes(getUserId());
@@ -180,6 +235,9 @@ const createComment = ({
   request(`user?userId=${creatorId}`, "GET", "", token).then(
     ({ image, name }) => {
       card.querySelector(".card-creator-name").innerText = name;
+      card
+        .querySelector(".card-creator-name")
+        .addEventListener("click", handleUserNameClick);
       if (image) card.querySelector(".card-img").src = image;
     }
   );
@@ -371,17 +429,32 @@ const viewThread = (threadId, userId) =>
   request(`thread?id=${threadId}`, "GET", "", token).then(
     ({ title, content, likes, creatorId, id, watchees }) => {
       localStorage.setItem("currentThread", threadId);
-      document.querySelector("#like-thread-btn").style.background =
-        likes.includes(userId) ? "red" : "";
+      document.querySelector(".thread-likes").innerText = likes.length;
 
-      document.querySelector("#watch-thread-btn").style.background =
-        watchees.includes(userId) ? "red" : "";
+      document
+        .querySelectorAll(".heart")
+        .forEach((el) => (el.style.display = "none"));
+
+      if (likes.includes(userId)) {
+        document.querySelector(
+          ".thread-btn-container .bi-heart-fill"
+        ).style.display = "inline-block";
+      } else {
+        document.querySelector(
+          ".thread-btn-container .bi-heart"
+        ).style.display = "inline-block";
+      }
+      document.querySelector("#watch-thread-btn").innerText = watchees.includes(
+        userId
+      )
+        ? "Unwatch"
+        : "Watch";
 
       document.querySelector("#edit-thread-btn").style.display =
-        creatorId === getUserId() ? "flex" : "none";
+        creatorId === getUserId() ? "block" : "none";
 
       document.querySelector("#delete-thread-btn").style.display =
-        creatorId === getUserId() ? "flex" : "none";
+        creatorId === getUserId() ? "block" : "none";
 
       request(`comments?threadId=${threadId}`, "GET", "", token).then(
         (comments) => {
@@ -419,9 +492,6 @@ const viewThread = (threadId, userId) =>
       document.querySelector(".view-thread-creator").innerText = creatorId;
 
       document.querySelector(".view-thread-content").innerText = content;
-      document.querySelector(
-        ".view-thread-likes"
-      ).innerText = `${likes.length}`;
 
       document.querySelector(".view-thread-id").innerText = id;
 
@@ -575,9 +645,9 @@ document.querySelector("#delete-thread-btn").addEventListener("click", () => {
 });
 document.querySelector("#like-thread-btn").addEventListener("click", (e) => {
   const threadId = document.querySelector(".view-thread-id").innerText;
-  const turnon = !(
-    document.querySelector("#like-thread-btn").style.background === "red"
-  );
+  const turnon =
+    document.querySelector(".thread-btn-container .bi-heart-fill").style
+      .display === "none";
 
   request(
     "thread/like",
@@ -591,28 +661,26 @@ document.querySelector("#like-thread-btn").addEventListener("click", (e) => {
 });
 
 document.querySelector("#watch-thread-btn").addEventListener("click", () => {
-  const turnon = !(
-    document.querySelector("#watch-thread-btn").style.background === "red"
-  );
+  console.log(document.querySelector("#watch-thread-btn").style.innerText);
+  const turnon =
+    document.querySelector("#watch-thread-btn").innerText === "Watch";
   const threadId = document.querySelector(".view-thread-id").innerText;
   request("thread/watch", "PUT", { id: threadId, turnon }, token).then(() =>
     viewThread(threadId, getUserId())
   );
 });
+
 const container = document.querySelector("#thread-list");
 
-document.querySelector("#next-button").addEventListener("click", () => {
-  displayThreads(page + 5).then((msg) => {
-    msg === "Success" ? (page = page + 5) : displayThreads(page);
-  });
-});
-
-document.querySelector("#prev-button").addEventListener("click", () => {
-  if (page >= 5)
-    displayThreads(page - 5).then((msg) => {
-      msg === "Success" ? (page = page - 5) : displayThreads(page);
+document
+  .querySelector("#load-more-threads-btn")
+  .addEventListener("click", (e) => {
+    page = page + 5;
+    displayThreads(page).then(({ success }) => {
+      if (!success) e.target.setAttribute("disabled", "true");
     });
-});
+  });
+
 document.querySelector("#comment-btn").addEventListener("click", () => {
   const commentText = document.querySelector("#comment-text-area").value;
   const threadId = document.querySelector(".view-thread-id").innerText;
@@ -628,4 +696,51 @@ document.querySelector("#comment-btn").addEventListener("click", () => {
   ).then(({ id }) => {
     viewThread(threadId, getUserId());
   });
+});
+
+document
+  .querySelectorAll("#login-link, #register-link, #dashboard-link")
+  .forEach((link) =>
+    link.addEventListener("click", () => goToPage(`${link.id.split("-")[0]}`))
+  );
+
+document.querySelector("#user-btn").addEventListener("click", (e) => {
+  e.preventDefault();
+  const newName = document.querySelector("#user-name").value;
+  const newEmail = document.querySelector("#user-email").value;
+  const newPassword = document.querySelector("#user-password").value;
+  const newImage = document.querySelector("#user-img")?.files[0];
+
+  if (newImage) {
+    fileToDataUrl(document.querySelector("#user-img").files[0]).then(
+      (encoding) =>
+        request(
+          `user?userId=${getUserId()}`,
+          "PUT",
+          {
+            email: newEmail,
+            password: newPassword,
+            name: newName,
+            image: encoding,
+          },
+          token
+        ).then(() => goToPage("dashboard"))
+    );
+  } else {
+    request(
+      `user`,
+      "PUT",
+      {
+        email: newEmail,
+        password: newPassword,
+        name: newName,
+        userId: getUserId(),
+      },
+      token
+    ).then(() => goToPage("dashboard"));
+  }
+});
+document.querySelector(".profile-btn").addEventListener("click", (e) => {
+  e.preventDefault();
+  handleUserNameClick(getUserId());
 });

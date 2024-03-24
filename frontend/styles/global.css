@@ -10,7 +10,6 @@ h1 {
   font-weight: bold;
 }
 .link {
-  color: red;
   text-decoration: none;
 }
 html,
@@ -31,7 +30,8 @@ header {
   align-items: center;
   padding: 0px 50px;
   height: 40px; */
-  background: #3e3e3e;
+  background: #212529;
+  border-bottom: 1px solid white;
   /* height: 40px; */
 }
 
@@ -41,7 +41,6 @@ div.modal {
 main {
   /* margin-top: 35px; */
   flex: 1;
-  height: 500px;
   background-color: #29282b;
 }
 
@@ -50,28 +49,39 @@ main {
 }
 
 #side-bar {
-  background-color: red;
   flex: 1;
   min-width: fit-content;
   display: flex;
   flex-direction: column;
 }
 #thread-list {
-  height: 400px;
+  height: 460px;
   overflow: auto;
 }
+#thread-create-btn {
+  margin: auto;
+}
+
 #main-content {
-  flex: 3;
+  flex: 6;
 
   background-color: #212529;
-
+  padding: 50px 100px;
   overflow: auto;
 }
 
 #pagination-btns {
   display: flex;
 }
-
+.text-area {
+  width: 100%;
+  margin: auto;
+  margin-top: 50px;
+  height: 200px;
+}
+#user-subpage {
+  flex-direction: column;
+}
 #auth-page {
   height: 100%;
 }
@@ -84,6 +94,9 @@ main {
 }
 nav {
   display: none;
+}
+.card-creator-name {
+  cursor: pointer;
 }
 
 .thread-interactives {
@@ -106,9 +119,13 @@ h5 {
 }
 .comment-btns {
   display: flex;
+  gap: 5px;
 }
 .comment-btn {
-  transform: scale(0.9);
+  font-size: 0.8rem;
+}
+.date {
+  font-size: 0.7rem;
 }
 
 .card-id {
@@ -128,4 +145,24 @@ h5 {
 
 #auth-nav {
   display: flex;
+}
+.thread-btn-container {
+  display: flex;
+  margin-bottom: 50px;
+  justify-content: center;
+  gap: 5px;
+}
+#view-thread-subpage {
+  text-align: center;
+}
+.card {
+  text-align: left;
+}
+.card-user-id {
+  display: none;
+}
+
+#login-page,
+#register-page {
+  padding: 50px 200px;
 }
