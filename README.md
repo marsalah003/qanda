@@ -16,6 +16,7 @@
 * 15/03: URL fragments clarified + removal of unique URL requirement
 * 16/03: Clarified thread list pagination in milestone 3 that was explained in lectures; Clarified for 2.6.3. that watching is in relation to watching threads and not users + added a hint to help; Removed `2.3.1` requirement about unique URL; Reinforced (which can be inferred from API some admin permissions.
 * 18/03: Clarified in relation to what to do when there are comments on the thread - a very minor update
+* 25/03: Clarified that there isn't a way to click on a user's name from a like
 
 ## 1. Before you start
 
@@ -198,7 +199,7 @@ Milestone 5 focuses predominately on user profiles and admins manage other admin
 
 #### 2.5.1. Viewing a profile
 
-* Let a user click on a user's name from a thread, like, or comment, and be taken to a profile screen for that user.
+* Let a user click on a user's name from a thread or comment, and be taken to a profile screen for that user.
 * The profile screen should contain any information the backend provides for that particular user ID via (`GET /user`) (excludes the user ID).
 * The profile should also display all threads made by that person. The threads shown should show the title, content, number of likes and comments.
 
