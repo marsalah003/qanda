@@ -61,29 +61,34 @@
       </div>
     </div>
 
-    <div class="modal" id="comment-model" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
+    <div
+      class="modal alert"
+      tabindex="-1"
+      id="comment-modal"
+      aria-modal="false"
+    >
+      <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Modal title</h5>
+            <h5 class="comment-modal-replying-to"></h5>
             <button
               type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-label="Close"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <textarea name="" id="comment-text" cols="30" rows="10"></textarea>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary comment-btn"
+              class="btn-close close"
               data-bs-dismiss="modal"
-            >
+              aria-label="Close"
+            ></button>
+          </div>
+
+          <div class="modal-body">
+            <textarea
+              class="form-control"
+              id="comment-text"
+              required
+            ></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary comment-btn btn-sm">
               Comment
             </button>
           </div>
@@ -149,6 +154,7 @@
       </a>
     </div>
 
+    <!--  The structure of this comment template was partially taken from https://mdbootstrap.com/docs/standard/extended/comments/ -->
     <div class="comment-thread-container" style="display: none">
       <div class="card mb-3">
         <div class="card-body">
@@ -166,20 +172,22 @@
               >
                 <h6 class="text-primary fw-bold mb-0">
                   <span class="card-creator-name">lara_stewart</span>
-                  <span class="card-user-id" style="background: red"> </span>
-                  <span class="text-light ms-2 card-text"
-                    >Hmm, This poster looks cool</span
-                  >
-                  <span class="parent"></span>
+                  <span class="card-user-id"> </span>
+                  <span
+                    class="text-light ms-2 card-text"
+                    style="word-break: break-all"
+                    >Hmm, This poster looks cool
+                  </span>
+                  <span class="parent" style="display: none"></span>
                 </h6>
                 <p class="mb-0 date">2 days ago</p>
               </div>
               <div class="d-flex justify-content-between align-items-center">
-                <p class="small mb-0 comment-btns" style="color: #aaa">
+                <p class="small mb-0 comment-btns">
                   <button
                     type="button"
                     role=""
-                    class="btn btn-secondary comment-btn"
+                    class="btn btn-secondary comment-btn btn-sm"
                     id="edit-card"
                     style="display: none"
                   >
@@ -203,7 +211,7 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-primary comment-btn reply-to-card"
+                    class="btn btn-primary comment-btn reply-to-card btn-sm"
                   >
                     Reply
                     <svg
@@ -221,9 +229,11 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-primary comment-btn"
+                    class="btn btn-primary comment-btn btn-sm"
                     id="like-btn"
                   >
+                    <span class="like-btn-text">Like</span>
+
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="12"
@@ -254,7 +264,7 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-primary comment-btn see-card-replies"
+                    class="btn btn-primary comment-btn see-card-replies btn-sm"
                   >
                     <span class="replies-btn-message">See Replies</span>
                     <svg
@@ -272,7 +282,7 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-danger comment-btn remove-card-btn"
+                    class="btn btn-danger comment-btn remove-card-btn btn-sm"
                     style="display: none"
                   >
                     <svg
@@ -315,22 +325,33 @@
           <div class="nav" role="navigation">
             <button
               type="button"
-              class="btn btn-outline-light me-2"
+              class="btn btn-outline-light me-2 btn-sm"
               id="login-link"
             >
               Login
             </button>
-            <button type="button" class="btn btn-light" id="register-link">
+            <button
+              type="button"
+              class="btn btn-light btn-sm"
+              id="register-link"
+            >
               Register
             </button>
           </div>
 
           <button
             type="button"
-            class="btn btn-warning auth-nav"
+            class="btn btn-light auth-nav btn-sm"
             id="dashboard-link"
           >
             Dashboard
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-light auth-nav btn-sm"
+            id="logout-link"
+          >
+            Log Out
           </button>
 
           <h2 class="header-user-name auth-nav"></h2>
@@ -354,9 +375,6 @@
               <ul class="dropdown-menu text-small">
                 <li>
                   <a class="dropdown-item profile-btn" href="#">Profile</a>
-                </li>
-                <li>
-                  <a class="dropdown-item" href="#" id="logout-link">Log out</a>
                 </li>
               </ul>
             </div>
@@ -401,7 +419,7 @@
       </div>
       <div id="register-page" class="page">
         <h1>Register</h1>
-        <form id="register-form" method="post">
+        <form method="post">
           <div class="row mb-3">
             <label for="register-email" class="col-sm-2 col-form-label"
               >Email</label
@@ -464,13 +482,28 @@
       <div id="auth-page" class="page">
         <div class="b-example-divider b-example-vr"></div>
         <div id="side-bar">
-          <button id="thread-create-btn" class="btn btn-dark">
-            Create a thread
+          <button id="thread-create-btn" class="btn btn-primary btn-lg">
+            New Thread
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="19"
+              height="19"
+              fill="currentColor"
+              class="bi bi-pencil-square"
+              viewBox="0 0 16 16"
+            >
+              <path
+                d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
+              />
+              <path
+                fill-rule="evenodd"
+                d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"
+              />
+            </svg>
           </button>
 
           <div
             class="d-flex flex-column align-items-stretch flex-shrink-0 bg-body-tertiary thread-container"
-            style="width: 320px"
           >
             <div class="btn-group" role="group" aria-label="Basic example">
               <button
@@ -484,22 +517,23 @@
             <span id="thread-list"></span>
           </div>
         </div>
+
         <div id="main-content">
           <div id="dashboard-subpage" class="subpage"><h1>Dashboard</h1></div>
           <div id="user-subpage" class="subpage">
-            <h1>User Sub Page</h1>
-            Email:
+            <h1>User Details</h1>
+            <b>Email:</b>
             <p class="user-email"></p>
-            Name:
+            <b>Name:</b>
             <p class="user-name"></p>
-            image:
-            <img src="" alt="" class="user-img" />
+            <b>image:</b>
+            <img src="" alt="user-image" class="user-img" />
 
             <div id="user-thread-list"></div>
 
             <form
-              id="user-form"
               class="hide-by-default"
+              id="user-form"
               method="post"
               style="display: none"
             >
@@ -582,27 +616,67 @@
                 Update
               </button>
             </div>
+            <div id="user-threads"></div>
           </div>
           <div id="create-thread-subpage" class="subpage">
-            <h1>Create Thread page</h1>
-            <form action="POST">
-              <label for="create-thread-title">Title</label>
-              <input type="text" id="create-thread-title" />
+            <h1>Create Thread</h1>
+            <form method="POST">
+              <div class="row mb-3">
+                <label for="create-thread-title" class="col-sm-2 col-form-label"
+                  >Title</label
+                >
+                <div class="col-sm-10">
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="A thread about cats"
+                    id="create-thread-title"
+                  />
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label
+                  for="create-thread-content"
+                  class="col-sm-2 col-form-label"
+                  >Content</label
+                >
+                <div class="col-sm-10">
+                  <textarea
+                    class="form-control"
+                    id="create-thread-content"
+                    required
+                  ></textarea>
+                </div>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label" for="create-thread-private">
+                  Is Private?
+                </label>
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  value=""
+                  id="create-thread-private"
+                />
+              </div>
               <br />
-              <label for="create-thread-content">Content</label>
-              <input type="text" id="create-thread-content" />
-              <br />
-              <label for="create-thread-private">Private?</label>
-              <input type="checkbox" id="create-thread-private" />
-              <button type="submit" id="submit-thread-btn">Submit</button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                id="submit-thread-btn"
+              >
+                Submit
+              </button>
             </form>
           </div>
           <div id="view-thread-subpage" class="subpage">
             <h1 class="view-thread-title">Title</h1>
+
+            <span class="card-creator-name view-thread-creator-name"></span>
+
+            <p class="view-thread-creator" style="display: none"></p>
             <p class="view-thread-content">Body Content</p>
             <p class="view-thread-id" style="display: none"></p>
-            thread creator:
-            <p class="view-thread-creator"></p>
 
             <div class="thread-btn-container">
               <button
@@ -684,7 +758,7 @@
                   <button
                     type="button"
                     id="comment-btn"
-                    class="btn btn-primary"
+                    class="btn btn-primary btn-sm"
                   >
                     Comment
                   </button></span
@@ -698,15 +772,64 @@
             </div>
           </div>
           <div id="edit-thread-subpage" class="subpage">
-            <label for="edit-thread-title">Title</label>
-            <input type="text" id="edit-thread-title" />
-            <br />
-            <label for="edit-thread-content">Content</label>
-            <input type="text" id="edit-thread-content" />
-            <br />
-            <label for="edit-thread-private">Private?</label>
-            <input type="checkbox" id="edit-thread-private" />
-            <button id="edit-submit-thread-btn">Edit</button>
+            <h1>Edit</h1>
+            <form method="POST">
+              <div class="row mb-3">
+                <label for="edit-thread-title" class="col-sm-2 col-form-label"
+                  >Title</label
+                >
+                <div class="col-sm-10">
+                  <input
+                    type="text"
+                    class="form-control"
+                    placeholder="A thread about cats"
+                    id="edit-thread-title"
+                  />
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="edit-thread-content" class="col-sm-2 col-form-label"
+                  >Content</label
+                >
+                <div class="col-sm-10">
+                  <textarea
+                    class="form-control"
+                    id="edit-thread-content"
+                    required
+                  ></textarea>
+                </div>
+              </div>
+              <div class="form-check">
+                <label class="form-check-label" for="edit-thread-private">
+                  Is Private?
+                </label>
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  value=""
+                  id="edit-thread-private"
+                />
+              </div>
+              <div class="form-check">
+                <label class="form-check-label" for="edit-thread-locked">
+                  Is Locked?
+                </label>
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  value=""
+                  id="edit-thread-locked"
+                />
+              </div>
+              <br />
+              <button
+                type="submit"
+                class="btn btn-primary"
+                id="edit-submit-thread-btn"
+              >
+                Edit
+              </button>
+            </form>
           </div>
         </div>
       </div>

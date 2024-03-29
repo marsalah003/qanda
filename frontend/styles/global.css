@@ -9,6 +9,9 @@
 h1 {
   font-weight: bold;
 }
+h2 {
+  font-size: 1rem;
+}
 .link {
   text-decoration: none;
 }
@@ -20,6 +23,9 @@ body {
   display: flex;
   width: 100%;
   flex-direction: column;
+}
+.header-user-name {
+  margin: 0px;
 }
 header {
   /* position: fixed;
@@ -49,22 +55,18 @@ main {
 }
 
 #side-bar {
+  min-width: 150px;
   flex: 1;
-  min-width: fit-content;
-  display: flex;
-  flex-direction: column;
+  background-color: #212529;
 }
+
 #thread-list {
-  height: 460px;
-  overflow: auto;
-}
-#thread-create-btn {
-  margin: auto;
+  overflow-y: auto;
+  height: 80%;
 }
 
 #main-content {
-  flex: 6;
-
+  flex: 3;
   background-color: #212529;
   padding: 50px 100px;
   overflow: auto;
@@ -79,14 +81,35 @@ main {
   margin-top: 50px;
   height: 200px;
 }
+.like-btn-text {
+  margin-right: 4px;
+}
+#user-sidebar {
+  display: none;
+}
 #user-subpage {
   flex-direction: column;
 }
+#comment-text {
+  height: 200px;
+}
+#thread-create-btn {
+  margin: 10px 0px;
+}
+
 #auth-page {
   height: 100%;
 }
-#thread-create-btn {
-  width: 100px;
+.thread-container {
+  height: 100%;
+}
+#create-thread-content,
+#edit-thread-content {
+  height: 200px;
+}
+#create-thread-subpage,
+#edit-thread-subpage {
+  flex-direction: column;
 }
 
 .page {
@@ -98,7 +121,12 @@ nav {
 .card-creator-name {
   cursor: pointer;
 }
-
+.card-text {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1;
+  overflow: hidden;
+}
 .thread-interactives {
   display: flex;
   align-items: center;
@@ -122,7 +150,7 @@ h5 {
   gap: 5px;
 }
 .comment-btn {
-  font-size: 0.8rem;
+  font-size: 0.5rem;
 }
 .date {
   font-size: 0.7rem;
@@ -161,8 +189,44 @@ h5 {
 .card-user-id {
   display: none;
 }
-
+/* .col-sm-2 {
+  margin-right: 5px;
+} */
 #login-page,
 #register-page {
-  padding: 50px 200px;
+  padding: 10% 25%;
+}
+
+@media (max-width: 1000px) {
+  #side-bar {
+    font-size: 0.7rem;
+  }
+  #side-bar svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+@media (max-width: 810px) {
+  .thread-btn-container .btn {
+    font-size: 0.6rem;
+  }
+  .thread-btn-container svg {
+    width: 12px;
+    height: 12px;
+  }
+  #main-content {
+    padding: 14px 5px;
+  }
+}
+
+@media (max-width: 684px) {
+  #thread-create-btn,
+  #load-more-threads-btn {
+    transform: scale(0.8);
+  }
+}
+@media (max-width: 600px) {
+  #side-bar {
+    display: none;
+  }
 }

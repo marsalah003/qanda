@@ -16,7 +16,6 @@ const pages = ["login", "register", "dashboard"];
 const subpages = ["create-thread"];
 let intervalId;
 let page = 0;
-let currentPage;
 let currentThread = localStorage.getItem("currentThread") || null;
 /*
     Helper functions
@@ -31,7 +30,9 @@ const goToPage = (page) => {
     displayNav("auth-nav");
   }
 
-  if (page === "dashboard") return goToSubpage("dashboard");
+  if (page === "dashboard") {
+    return goToSubpage("dashboard");
+  }
   document
     .querySelectorAll("main > .page")
     .forEach((page) => (page.style.display = "none"));
@@ -41,18 +42,18 @@ const goToPage = (page) => {
 
 const goToSubpage = (subpage) => {
   request(`user?userId=${getUserId()}`, "GET", "", token).then(
-    ({ email, image }) => {
-      document.querySelector(".header-user-name").innerText = email;
+    ({ email, image, name }) => {
+      document.querySelector(".header-user-name").innerText = name;
       if (image) document.querySelector(".profile_img").src = image;
     }
   );
-  if (!document.querySelector(`#${subpage}-subpage`).style.display) {
-    displayThreads(page);
-  }
+
+  if (subpage === "dashboard") displayThreads(page);
+
   clearInterval(intervalId);
   intervalId = setInterval(() => {
     displayThreads(page);
-  }, 1000 * 30);
+  }, 1000 * 150);
   goToPage("auth");
   document
     .querySelectorAll(".hide-by-default")
@@ -63,23 +64,27 @@ const goToSubpage = (subpage) => {
 
   document.querySelector(`#${subpage}-subpage`).style.display = "flex";
 };
-const displayThreads = (start, threadsToInclude) => {
-  // document.querySelector("#thread-list").innerHTML = "";
+
+const displayThreads = (start, dontRemove = false, threadsToInclude) => {
+  if (!dontRemove) {
+    console.log("hey");
+    document.querySelector("#thread-list").innerHTML = "";
+    document.querySelector("#load-more-threads-btn").style.display = "block";
+    document.querySelector("#thread-create-btn").style.display = "block";
+    page = 0;
+    start = 0;
+  }
 
   return new Promise((resolve) =>
     request(`threads?start=${start}`, "GET", "", token).then((data) => {
-      if (data.length === 0) resolve({ success: false });
+      if (data.length === 0) resolve({ success: false, num: 0 });
       const threadIdPromises = [];
-
-      for (const threadId of data) {
-        if (threadsToInclude)
-          if (!threadsToInclude.includes(threadId)) continue;
+      for (const threadId of threadsToInclude ? threadsToInclude : data) {
         threadIdPromises.push(
           request(`thread?id=${threadId}`, "GET", "", token)
         );
       }
-
-      Promise.all(threadIdPromises).then((data) =>
+      Promise.all(threadIdPromises).then((data) => {
         data.forEach(({ creatorId, title, createdAt, likes, id }) =>
           request(`user?userId=${creatorId} `, "GET", "", token)
             .then(({ name }) => {
@@ -91,6 +96,7 @@ const displayThreads = (start, threadsToInclude) => {
               card.querySelector(".card-title").innerText = title;
               card.querySelector(".card-id").innerText = id;
               card.querySelector(".card-creator-name").innerText = name;
+
               card.querySelector(".card-timestamp").innerText = createdAt;
               card.querySelector(".card-user-id").innerText = creatorId;
 
@@ -108,7 +114,7 @@ const displayThreads = (start, threadsToInclude) => {
                 .catch((err) => displayError(err));
 
               document.querySelector("#thread-list").appendChild(card);
-              resolve({ success: false });
+              resolve({ success: true, num: data.length });
               card.addEventListener("click", (e) => {
                 document
                   .querySelectorAll(".list-group-item")
@@ -141,11 +147,31 @@ const displayThreads = (start, threadsToInclude) => {
                 })
                 .forEach((node) => list.appendChild(node));
             })
-        )
-      );
+        );
+      });
     })
   );
 };
+const getAllUserThreads = (userId) =>
+  getAllThreads().then((threadIds) => {
+    const promises = [];
+    for (const threadId of threadIds) {
+      promises.push(request(`thread?id=${threadId}`, "GET", "", token));
+    }
+    return Promise.all(promises).then((threads) =>
+      threads.filter(({ creatorId }) => creatorId == userId).map(({ id }) => id)
+    );
+  });
+const getAllThreadIdsRecursive = (start) =>
+  new Promise((resolve) =>
+    request(`threads?start=${start}`, "GET", "", token).then((threadIds) => {
+      if (threadIds.length === 0) return resolve(threadIds);
+      getAllThreadIdsRecursive(start + 5).then((data) =>
+        resolve([...data, ...threadIds])
+      );
+    })
+  );
+const getAllThreads = () => getAllThreadIdsRecursive(0);
 const handleUserNameClick = (e) => {
   let targetUserId;
   if (typeof e === "object") {
@@ -158,7 +184,6 @@ const handleUserNameClick = (e) => {
   const isOwnProfile = targetUserId == getUserId();
 
   const promises = [];
-
   promises.push(request(`user?userId=${targetUserId}`, "GET", "", token));
   promises.push(request(`user?userId=${getUserId()}`, "GET", "", token));
 
@@ -167,9 +192,7 @@ const handleUserNameClick = (e) => {
       { admin: isTargetAdmin, name, email, image },
       { admin: isUserAdmin },
     ]) => {
-      goToSubpage("user");
-      if (isOwnProfile)
-        document.querySelector("#user-form").style.display = "block";
+      console.log(isOwnProfile);
 
       if (isUserAdmin && !isOwnProfile) {
         document
@@ -194,62 +217,98 @@ const handleUserNameClick = (e) => {
           ? "admin"
           : "user";
       }
+
       document.querySelector(".user-email").innerText = email;
       document.querySelector(".user-name").innerText = name;
 
       document.querySelector(".user-img").src = image;
+      document.querySelector("#user-threads");
+      goToSubpage("user");
+
+      if (isOwnProfile)
+        document.querySelector("#user-form").style.display = "block";
+
+      document.querySelector("#thread-create-btn").style.display = "none";
+      document.querySelector("#load-more-threads-btn").style.display = "none";
+
+      getAllUserThreads(targetUserId).then((threads) => {
+        document.querySelector("#thread-list").innerHTML = "";
+        displayThreads(0, true, threads);
+      });
     }
   );
 };
 
-const createComment = ({
-  content,
-  creatorId,
-  id,
-  parentCommentId,
-  createdAt,
-  likes,
-  name,
-}) => {
-  const card = document
-    .querySelector(".comment-thread-container")
-    .cloneNode(true);
+const createComment = (
+  { content, creatorId, id, parentCommentId, createdAt, likes, name },
+  threadId
+) =>
+  new Promise((resolve) => {
+    const card = document
+      .querySelector(".comment-thread-container")
+      .cloneNode(true);
 
-  card.style.display = "block";
+    const promises = [];
+    promises.push(request(`thread?id=${threadId}`, "GET", "", token));
+    promises.push(request(`comments?threadId=${threadId}`, "GET", "", token));
 
-  card.querySelector(".parent").innerText = parentCommentId;
-  card.querySelector(".card-id").innerText = id;
-  card.querySelector(".card-user-id").innerText = creatorId;
-  card.querySelector(".card-likes").innerText = likes.length;
+    Promise.all(promises).then(([{ lock }, comments]) => {
+      card.style.display = "block";
+      const disableWhenLocked = [
+        "#edit-card",
+        ".reply-to-card",
+        "#like-btn",
+        ".remove-card-btn",
+      ];
+      const replies = comments.filter(
+        ({ parentCommentId }) => parentCommentId == id
+      );
+      if (replies.length === 0)
+        card.querySelector(".see-card-replies").style.display = "none";
+      disableWhenLocked.forEach((el) => {
+        card.querySelector(el).removeAttribute("disabled");
+      });
 
-  const isLiked = likes.includes(getUserId());
+      card.querySelector(".parent").innerText = parentCommentId;
+      card.querySelector(".card-id").innerText = id;
+      card.querySelector(".card-user-id").innerText = creatorId;
+      card.querySelector(".card-likes").innerText = likes.length;
+      const isLiked = likes.includes(getUserId());
+      card.querySelector(".like-btn-text").innerText = isLiked
+        ? "Unlike"
+        : "Like";
 
-  card.querySelector(".bi-heart-fill").style.display = isLiked
-    ? "inline-block"
-    : "none";
+      card.querySelector(".bi-heart-fill").style.display = isLiked
+        ? "inline-block"
+        : "none";
 
-  card.querySelector(".bi-heart").style.display = isLiked
-    ? "none"
-    : "inline-block";
+      card.querySelector(".bi-heart").style.display = isLiked
+        ? "none"
+        : "inline-block";
 
-  request(`user?userId=${creatorId}`, "GET", "", token).then(
-    ({ image, name }) => {
-      card.querySelector(".card-creator-name").innerText = name;
-      card
-        .querySelector(".card-creator-name")
-        .addEventListener("click", handleUserNameClick);
-      if (image) card.querySelector(".card-img").src = image;
-    }
-  );
-  const rtf = new Intl.RelativeTimeFormat("en", {
-    numeric: "auto",
+      request(`user?userId=${creatorId}`, "GET", "", token).then(
+        ({ image, name }) => {
+          card.querySelector(".card-creator-name").innerText = name;
+          card
+            .querySelector(".card-creator-name")
+            .addEventListener("click", handleUserNameClick);
+          if (image) card.querySelector(".card-img").src = image;
+        }
+      );
+      const rtf = new Intl.RelativeTimeFormat("en", {
+        numeric: "auto",
+      });
+      const dateFromNow = getRelativeTimeString(new Date(createdAt));
+      card.querySelector(".date").innerText = dateFromNow;
+      card.querySelector(".card-text").innerText = content;
+      if (lock) {
+        disableWhenLocked.forEach((el) =>
+          card.querySelector(el).setAttribute("disabled", "true")
+        );
+      }
+      resolve(card);
+    });
   });
-  const dateFromNow = getRelativeTimeString(new Date(createdAt));
-  card.querySelector(".date").innerText = dateFromNow;
-  card.querySelector(".card-text").innerText = content;
-
-  return card;
-};
 
 const handleViewCommentReplies = (comment, threadId) => {
   comment
@@ -275,8 +334,9 @@ const handleViewCommentReplies = (comment, threadId) => {
           const replies = comments.filter(
             (comment) => comment.parentCommentId == commentId
           );
-          if (replies.length !== 0)
+          if (replies.length !== 0) {
             repliesBtnMessage.innerText = "Hide Replies";
+          }
 
           replies
             .sort(
@@ -285,27 +345,29 @@ const handleViewCommentReplies = (comment, threadId) => {
                 new Date(a.createdAt).getTime()
             )
             .forEach((commentObj) => {
-              const newComment = createComment(commentObj);
-              if (commentObj.creatorId == getUserId()) {
-                newComment.querySelector(".remove-card-btn").style.display =
-                  "block";
-                newComment.querySelector("#edit-card").style.display = "block";
-              }
-              const parentMargin = parseInt(
-                getComputedStyle(comment).marginLeft
-              );
+              createComment(commentObj, threadId).then((newComment) => {
+                if (commentObj.creatorId == getUserId()) {
+                  newComment.querySelector(".remove-card-btn").style.display =
+                    "block";
+                  newComment.querySelector("#edit-card").style.display =
+                    "block";
+                }
+                const parentMargin = parseInt(
+                  getComputedStyle(comment).marginLeft
+                );
 
-              newComment.style.marginLeft = parentMargin + 30 + "px";
+                newComment.style.marginLeft = parentMargin + 30 + "px";
 
-              target
-                .closest(".comment-thread-container")
-                .appendChild(newComment);
+                target
+                  .closest(".comment-thread-container")
+                  .appendChild(newComment);
 
-              handleCommentReply(newComment);
-              handleViewCommentReplies(newComment, threadId);
-              handleCommentEdit(newComment);
-              handleCommentLike(newComment);
-              handleCommentRemove(newComment);
+                handleCommentReply(newComment);
+                handleViewCommentReplies(newComment, threadId);
+                handleCommentEdit(newComment);
+                handleCommentLike(newComment);
+                handleCommentRemove(newComment);
+              });
             });
         }
       );
@@ -320,7 +382,6 @@ const removeComment = (id, threadId) =>
             const replies = comments.filter(
               ({ parentCommentId }) => parentCommentId == id
             );
-            console.log(comments, replies, id, threadId);
             if (replies.length === 0) return resolve();
             replies.forEach(({ id }) =>
               removeComment(id, threadId).then(() => resolve())
@@ -337,7 +398,6 @@ const handleCommentRemove = (comment) =>
   comment.querySelector(".remove-card-btn").addEventListener("click", () => {
     const threadId = document.querySelector(".view-thread-id").innerText;
     const commentId = comment.querySelector(".card-id").innerText;
-    console.log("hey");
     removeComment(parseInt(commentId), threadId).then(() =>
       viewThread(threadId, getUserId())
     );
@@ -351,6 +411,10 @@ const handleCommentLike = (comment) => {
 
     const isLiked =
       comment.querySelector(".bi-heart-fill").style.display === "inline-block";
+
+    comment.querySelector(".like-btn-text").innerText = isLiked
+      ? "Like"
+      : "Unlike";
 
     comment.querySelector(".bi-heart-fill").style.display = isLiked
       ? "none"
@@ -380,8 +444,16 @@ const handleCommentEdit = (comment) => {
       const commentId = target
         .closest(".card-body")
         .querySelector(".card-id").innerText;
+      document.querySelector(".comment-modal-replying-to").innerText =
+        "Editing comment";
 
-      document.querySelector("#comment-model").style.display = "block";
+      document.querySelector("#comment-text").value =
+        comment.querySelector(".card-text").innerText;
+
+      const myModal = new bootstrap.Modal("#comment-modal", {
+        keyboard: false,
+      });
+      myModal.show();
       document.querySelector(".comment-btn").addEventListener("click", (e) => {
         const content = document.querySelector("#comment-text").value;
         const threadId = document.querySelector(".view-thread-id").innerText;
@@ -389,8 +461,9 @@ const handleCommentEdit = (comment) => {
         request("comment", "PUT", { id: commentId, content }, token).then(
           () => {
             comment.querySelector(".card-text").innerText = content;
-            const modal = document.querySelector("#comment-model");
+            const modal = document.querySelector("#comment-modal");
 
+            myModal.hide();
             modal.style.display = "none";
             modal.parentNode.replaceChild(modal.cloneNode(true), modal);
           }
@@ -400,7 +473,16 @@ const handleCommentEdit = (comment) => {
 };
 const handleCommentReply = (comment) => {
   comment.querySelector(".reply-to-card").addEventListener("click", (e) => {
-    document.querySelector("#comment-model").style.display = "block";
+    const myModal = new bootstrap.Modal("#comment-modal", {
+      keyboard: false,
+    });
+    myModal.show();
+    const nameReplyingTo =
+      comment.querySelector(".card-creator-name").innerText;
+    document.querySelector(
+      ".comment-modal-replying-to"
+    ).innerText = `Replying to ${nameReplyingTo}`;
+
     const seeRepliesElement = comment.querySelector(".see-card-replies");
     const parentCommentId = comment.querySelector(".card-id").innerText;
     document.querySelector(".comment-btn").addEventListener("click", (e) => {
@@ -412,8 +494,8 @@ const handleCommentReply = (comment) => {
         { content, threadId, parentCommentId },
         token
       ).then(() => {
-        const modal = document.querySelector("#comment-model");
-        modal.style.display = "none";
+        const modal = document.querySelector("#comment-modal");
+        myModal.hide();
 
         if (comment.childElementCount === 1) seeRepliesElement.click();
         else {
@@ -421,53 +503,73 @@ const handleCommentReply = (comment) => {
           seeRepliesElement.click();
         }
         modal.parentNode.replaceChild(modal.cloneNode(true), modal);
+        viewThread(threadId, getUserId());
       });
     });
   });
 };
-const viewThread = (threadId, userId) =>
-  request(`thread?id=${threadId}`, "GET", "", token).then(
-    ({ title, content, likes, creatorId, id, watchees }) => {
-      localStorage.setItem("currentThread", threadId);
-      document.querySelector(".thread-likes").innerText = likes.length;
+const viewThread = (threadId, userId) => {
+  const promises = [];
 
-      document
-        .querySelectorAll(".heart")
-        .forEach((el) => (el.style.display = "none"));
+  promises.push(request(`thread?id=${threadId}`, "GET", "", token));
 
-      if (likes.includes(userId)) {
-        document.querySelector(
-          ".thread-btn-container .bi-heart-fill"
-        ).style.display = "inline-block";
-      } else {
-        document.querySelector(
-          ".thread-btn-container .bi-heart"
-        ).style.display = "inline-block";
-      }
-      document.querySelector("#watch-thread-btn").innerText = watchees.includes(
-        userId
-      )
-        ? "Unwatch"
-        : "Watch";
+  promises.push(request(`comments?threadId=${threadId}`, "GET", "", token));
+  promises.push(request(`user?userId=${getUserId()}`, "GET", "", token));
+  Promise.all(promises).then(
+    ([
+      { title, content, likes, creatorId, id, watchees, lock },
+      comments,
+      { admin },
+    ]) =>
+      request(`user?userId=${creatorId}`, "GET", "", token).then(({ name }) => {
+        const hideWhenLocked = [
+          "comment-area",
+          "edit-thread-btn",
+          "watch-thread-btn",
+          "like-thread-btn",
+        ];
+        hideWhenLocked.forEach(
+          (el) => (document.querySelector(`#${el}`).style.display = "block")
+        );
+        localStorage.setItem("currentThread", threadId);
+        document.querySelector(".thread-likes").innerText = likes.length;
+        document.querySelector(".view-thread-creator-name").innerText = name;
+        document.querySelector("#edit-thread-btn").style.display =
+          creatorId == getUserId() || admin ? "block" : "none";
+        document
+          .querySelectorAll(".heart")
+          .forEach((el) => (el.style.display = "none"));
 
-      document.querySelector("#edit-thread-btn").style.display =
-        creatorId === getUserId() ? "block" : "none";
+        if (likes.includes(userId)) {
+          document.querySelector(
+            ".thread-btn-container .bi-heart-fill"
+          ).style.display = "inline-block";
+        } else {
+          document.querySelector(
+            ".thread-btn-container .bi-heart"
+          ).style.display = "inline-block";
+        }
 
-      document.querySelector("#delete-thread-btn").style.display =
-        creatorId === getUserId() ? "block" : "none";
+        document.querySelector("#watch-thread-btn").innerText =
+          watchees.includes(userId) ? "Unwatch" : "Watch";
 
-      request(`comments?threadId=${threadId}`, "GET", "", token).then(
-        (comments) => {
-          document.querySelector("#comments").innerHTML = "";
-          comments
-            .filter(({ parentCommentId }) => parentCommentId === null)
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-            )
-            .forEach((comment) => {
-              const parentCommentContainer = createComment(comment);
+        document.querySelector("#delete-thread-btn").style.display =
+          creatorId === getUserId() || admin ? "block" : "none";
+        if (lock) {
+          hideWhenLocked.forEach((el) => {
+            document.querySelector(`#${el}`).style.display = "none";
+          });
+        }
+
+        document.querySelector("#comments").innerHTML = "";
+        comments
+          .filter(({ parentCommentId }) => parentCommentId === null)
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .forEach((comment) => {
+            createComment(comment, threadId).then((parentCommentContainer) => {
               if (comment.creatorId == getUserId()) {
                 parentCommentContainer.querySelector(
                   ".remove-card-btn"
@@ -485,27 +587,29 @@ const viewThread = (threadId, userId) =>
               handleCommentLike(parentCommentContainer);
               handleCommentRemove(parentCommentContainer);
             });
-        }
-      );
+          });
 
-      document.querySelector(".view-thread-title").innerText = title;
-      document.querySelector(".view-thread-creator").innerText = creatorId;
+        document.querySelector(".view-thread-title").innerText = title;
+        document.querySelector(".view-thread-creator").innerText = creatorId;
 
-      document.querySelector(".view-thread-content").innerText = content;
+        document.querySelector(".view-thread-content").innerText = content;
 
-      document.querySelector(".view-thread-id").innerText = id;
+        document.querySelector(".view-thread-id").innerText = id;
 
-      goToSubpage("view-thread");
-    }
+        goToSubpage("view-thread");
+      })
   );
+};
 
 /*
     Main program
 */
 let token = JSON.parse(localStorage.getItem("token"))?.token;
 
-if (currentThread && token) viewThread(currentThread, getUserId());
-else {
+if (currentThread && token) {
+  viewThread(currentThread, getUserId());
+  displayThreads(0);
+} else {
   goToPage(token ? "dashboard" : "login");
 }
 
@@ -520,6 +624,7 @@ document.querySelectorAll("header .normal-link").forEach((link) =>
 
 document.querySelector("#login-btn").addEventListener("click", (e) => {
   e.preventDefault();
+
   const email = document.querySelector("#login-email").value;
   const password = document.querySelector("#login-password").value;
   request("auth/login", "POST", { email, password })
@@ -607,13 +712,16 @@ document.querySelector("#edit-thread-btn").addEventListener("click", () => {
   const content = document.querySelector(".view-thread-content").innerText;
   const threadId = document.querySelector(".view-thread-id").innerText;
 
-  request(`thread?id=${threadId}`, "GET", "", token).then(({ isPublic }) => {
-    document.querySelector("#edit-thread-title").value = title;
-    document.querySelector("#edit-thread-content").value = content;
-    document.querySelector("#edit-thread-private").checked = !isPublic;
+  request(`thread?id=${threadId}`, "GET", "", token).then(
+    ({ isPublic, lock }) => {
+      document.querySelector("#edit-thread-title").value = title;
+      document.querySelector("#edit-thread-content").value = content;
+      document.querySelector("#edit-thread-private").checked = !isPublic;
+      document.querySelector("#edit-thread-locked").checked = lock;
 
-    goToSubpage("edit-thread");
-  });
+      goToSubpage("edit-thread");
+    }
+  );
 });
 document
   .querySelector("#edit-submit-thread-btn")
@@ -622,14 +730,19 @@ document
     const title = document.querySelector("#edit-thread-title").value;
     const content = document.querySelector("#edit-thread-content").value;
     const isPublic = !document.querySelector("#edit-thread-private").checked;
+    const isLocked = document.querySelector("#edit-thread-locked").checked;
+
     const threadId = document.querySelector(".view-thread-id").innerText;
 
     request(
       "thread",
       "PUT",
-      { id: threadId, title, isPublic, content },
+      { id: threadId, title, isPublic, content, lock: isLocked },
       token
-    ).then(() => viewThread(threadId, getUserId()));
+    ).then(() => {
+      viewThread(threadId, getUserId());
+      displayThreads(0);
+    });
   });
 
 document.querySelector("#delete-thread-btn").addEventListener("click", () => {
@@ -638,7 +751,10 @@ document.querySelector("#delete-thread-btn").addEventListener("click", () => {
     displayThreads(0).then((data) => {
       const threadList = document.querySelector("#thread-list");
       const threadToView = threadList.querySelector(".card-id")?.innerText;
-      if (!threadToView) return goToPage("dashboard");
+      if (!threadToView) {
+        localStorage.removeItem("currentThread");
+        return goToPage("dashboard");
+      }
       viewThread(threadToView, getUserId());
     })
   );
@@ -661,7 +777,6 @@ document.querySelector("#like-thread-btn").addEventListener("click", (e) => {
 });
 
 document.querySelector("#watch-thread-btn").addEventListener("click", () => {
-  console.log(document.querySelector("#watch-thread-btn").style.innerText);
   const turnon =
     document.querySelector("#watch-thread-btn").innerText === "Watch";
   const threadId = document.querySelector(".view-thread-id").innerText;
@@ -676,8 +791,8 @@ document
   .querySelector("#load-more-threads-btn")
   .addEventListener("click", (e) => {
     page = page + 5;
-    displayThreads(page).then(({ success }) => {
-      if (!success) e.target.setAttribute("disabled", "true");
+    displayThreads(page, true).then(({ success, num }) => {
+      if (!success || num <= 4) e.target.style.display = "none";
     });
   });
 

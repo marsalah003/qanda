@@ -105,7 +105,6 @@ const displayNav = (navType) => {
   document
     .querySelectorAll(".nav, .auth-nav")
     .forEach((nav) => (nav.style.display = "none"));
-  console.log(navType);
   document.querySelectorAll(`.${navType}`).forEach((element) => {
     element.style.display = "block";
   });

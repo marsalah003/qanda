@@ -61,6 +61,9 @@ main {
   background-color: var(--bs-tertiary-bg);
 }
 
+.view-thread-creator-name::before {
+  content: "Made by ";
+}
 .scrollarea {
   overflow-y: auto;
 }
