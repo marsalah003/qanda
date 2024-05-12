@@ -1,8 +1,8 @@
-# Welcome to Banda!
+# Welcome to Qanda!
 
 ## To run the backend server:
 
-simply run npm start in the backend project. This will start the backend.
+simply run `npm start` in the backend project. This will start the backend.
 
 ## To run the frontend:
 
