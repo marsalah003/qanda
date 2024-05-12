@@ -82,16 +82,16 @@ main {
 .dropdown-toggle:not(:focus) {
   outline: 0;
 }
-/* from mdbootstrap */
 
+/* from mdbootstrap */
 .link-grey {
   color: #aaa;
 }
 .link-grey:hover {
   color: #00913b;
 }
-/*from  bootstrap */
 
+/*from  bootstrap */
 .bd-placeholder-img {
   font-size: 1.125rem;
   text-anchor: middle;
