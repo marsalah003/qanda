@@ -1,9 +1,11 @@
-# Welcome to Qanda!
+# Welcome to Banda!
 
 ## To run the backend server:
+
 simply run npm start in the backend project. This will start the backend.
 
 ## To run the frontend:
+
 To do this, run the following command once on your machine:
 
 `$ npm install --global http-server`
